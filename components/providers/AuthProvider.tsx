@@ -5,9 +5,19 @@ import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
+interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: UserProfile | null;
   isLoading: boolean;
   logout: () => Promise<void>;
 }
@@ -30,6 +40,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Auth state
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Next.js router for redirection
@@ -37,6 +48,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize Supabase client
   const supabase = createClient();
+
+  // Function to fetch user profile
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setProfile(null);
+      } else {
+        setProfile(profile);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching user profile:', err);
+      setProfile(null);
+    }
+  };
 
   // Logout function
   const logout = async () => {
@@ -55,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear local state (this will also happen via onAuthStateChange)
       setUser(null);
       setSession(null);
+      setProfile(null);
 
       // Redirect to home page
       router.push('/');
@@ -68,6 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Even on error, clear state and redirect
       setUser(null);
       setSession(null);
+      setProfile(null);
       router.push('/');
       router.refresh();
     } finally {
@@ -86,6 +120,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setSession(session);
           setUser(session?.user ?? null);
+          
+          // Fetch user profile if session exists
+          if (session?.user) {
+            fetchUserProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
         }
       } catch (err) {
         console.error('Unexpected error getting initial session:', err);
@@ -104,6 +145,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+
+        // Fetch user profile if session exists
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
 
         // Handle specific auth events
         if (event === 'SIGNED_IN') {
@@ -125,6 +173,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     user,
     session,
+    profile,
     isLoading,
     logout,
   };

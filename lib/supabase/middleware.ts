@@ -72,9 +72,11 @@ export async function updateSession(request: NextRequest) {
     // Check if user is accessing a protected route
     const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
                             request.nextUrl.pathname.startsWith('/profile');
+    
+    const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
     // If no user and trying to access protected route, redirect to login
-    if (!user && isProtectedRoute) {
+    if (!user && (isProtectedRoute || isAdminRoute)) {
       const redirectUrl = new URL('/login', request.url);
       
       // Add the current path as a query parameter for potential redirect after login
@@ -82,6 +84,35 @@ export async function updateSession(request: NextRequest) {
       
       console.log(`Redirecting unauthenticated user from ${request.nextUrl.pathname} to login`);
       return NextResponse.redirect(redirectUrl);
+    }
+
+    // If user is accessing admin route, check for admin role
+    if (user && isAdminRoute) {
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile for admin check:', profileError);
+          // Redirect to dashboard if profile fetch fails
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+
+        if (profile?.role !== 'admin') {
+          console.log(`Non-admin user ${user.id} attempted to access admin route: ${request.nextUrl.pathname}`);
+          // Redirect non-admin users to dashboard
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+
+        console.log(`Admin user ${user.id} accessing admin route: ${request.nextUrl.pathname}`);
+      } catch (err) {
+        console.error('Error checking admin role:', err);
+        // On error, redirect to dashboard for safety
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
     }
 
     // If user is authenticated and trying to access auth pages, redirect to dashboard

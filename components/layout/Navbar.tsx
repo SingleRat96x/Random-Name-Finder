@@ -8,7 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isLoading, logout } = useAuth();
+  const { user, profile, isLoading, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -86,6 +86,14 @@ export default function Navbar() {
                   >
                     Profile
                   </Link>
+                  {profile?.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center space-x-1 text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -218,6 +226,15 @@ export default function Navbar() {
                   >
                     Profile
                   </Link>
+                  {profile?.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="text-foreground hover:text-primary hover:bg-muted block px-3 py-2 rounded-md text-base font-medium transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center space-x-2 text-foreground hover:text-primary hover:bg-muted w-full px-3 py-2 rounded-md text-base font-medium transition-colors mt-1"
