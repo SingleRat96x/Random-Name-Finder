@@ -68,15 +68,31 @@ ON public.content_blocks(page_id, sort_order) WHERE page_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_content_blocks_tool_sorted 
 ON public.content_blocks(tool_slug, sort_order) WHERE tool_slug IS NOT NULL;
 
--- Add constraint for tool_slug format (URL-friendly)
-ALTER TABLE public.content_blocks 
-ADD CONSTRAINT IF NOT EXISTS chk_content_blocks_tool_slug_format 
-CHECK (tool_slug IS NULL OR tool_slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$');
+-- Add additional constraints for data integrity (idempotent)
+DO $$
+BEGIN
+    -- Add constraint for tool_slug format (URL-friendly)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_content_blocks_tool_slug_format' 
+        AND table_name = 'content_blocks'
+    ) THEN
+        ALTER TABLE public.content_blocks 
+        ADD CONSTRAINT chk_content_blocks_tool_slug_format 
+        CHECK (tool_slug IS NULL OR tool_slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$');
+    END IF;
 
--- Add constraint to ensure sort_order is non-negative
-ALTER TABLE public.content_blocks 
-ADD CONSTRAINT IF NOT EXISTS chk_content_blocks_sort_order_positive 
-CHECK (sort_order >= 0);
+    -- Add constraint to ensure sort_order is non-negative
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_content_blocks_sort_order_positive' 
+        AND table_name = 'content_blocks'
+    ) THEN
+        ALTER TABLE public.content_blocks 
+        ADD CONSTRAINT chk_content_blocks_sort_order_positive 
+        CHECK (sort_order >= 0);
+    END IF;
+END $$;
 
 -- Create function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_content_blocks_updated_at()

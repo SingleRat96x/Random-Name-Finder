@@ -21,131 +21,189 @@ ALTER TABLE public.content_blocks ENABLE ROW LEVEL SECURITY;
 -- CONTENT PAGES POLICIES
 -- =====================================================
 
--- Policy: Allow public read access to all content pages
-CREATE POLICY IF NOT EXISTS "content_pages_select_public" 
-ON public.content_pages FOR SELECT 
-TO public 
-USING (true);
+-- Create policies for content_pages (idempotent)
+DO $$
+BEGIN
+    -- Policy: Allow public read access to all content pages
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_pages' AND policyname = 'content_pages_select_public'
+    ) THEN
+        CREATE POLICY "content_pages_select_public" 
+        ON public.content_pages FOR SELECT 
+        TO public 
+        USING (true);
+    END IF;
 
--- Policy: Allow admin users to view all content pages
-CREATE POLICY IF NOT EXISTS "content_pages_select_admin" 
-ON public.content_pages FOR SELECT 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to view all content pages
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_pages' AND policyname = 'content_pages_select_admin'
+    ) THEN
+        CREATE POLICY "content_pages_select_admin" 
+        ON public.content_pages FOR SELECT 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to insert new content pages
-CREATE POLICY IF NOT EXISTS "content_pages_insert_admin" 
-ON public.content_pages FOR INSERT 
-TO authenticated 
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to insert new content pages
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_pages' AND policyname = 'content_pages_insert_admin'
+    ) THEN
+        CREATE POLICY "content_pages_insert_admin" 
+        ON public.content_pages FOR INSERT 
+        TO authenticated 
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to update content pages
-CREATE POLICY IF NOT EXISTS "content_pages_update_admin" 
-ON public.content_pages FOR UPDATE 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-)
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to update content pages
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_pages' AND policyname = 'content_pages_update_admin'
+    ) THEN
+        CREATE POLICY "content_pages_update_admin" 
+        ON public.content_pages FOR UPDATE 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        )
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to delete content pages
-CREATE POLICY IF NOT EXISTS "content_pages_delete_admin" 
-ON public.content_pages FOR DELETE 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to delete content pages
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_pages' AND policyname = 'content_pages_delete_admin'
+    ) THEN
+        CREATE POLICY "content_pages_delete_admin" 
+        ON public.content_pages FOR DELETE 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
+END $$;
 
 -- =====================================================
 -- CONTENT BLOCKS POLICIES
 -- =====================================================
 
--- Policy: Allow public read access to all content blocks
-CREATE POLICY IF NOT EXISTS "content_blocks_select_public" 
-ON public.content_blocks FOR SELECT 
-TO public 
-USING (true);
+-- Create policies for content_blocks (idempotent)
+DO $$
+BEGIN
+    -- Policy: Allow public read access to all content blocks
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_blocks' AND policyname = 'content_blocks_select_public'
+    ) THEN
+        CREATE POLICY "content_blocks_select_public" 
+        ON public.content_blocks FOR SELECT 
+        TO public 
+        USING (true);
+    END IF;
 
--- Policy: Allow admin users to view all content blocks
-CREATE POLICY IF NOT EXISTS "content_blocks_select_admin" 
-ON public.content_blocks FOR SELECT 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to view all content blocks
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_blocks' AND policyname = 'content_blocks_select_admin'
+    ) THEN
+        CREATE POLICY "content_blocks_select_admin" 
+        ON public.content_blocks FOR SELECT 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to insert new content blocks
-CREATE POLICY IF NOT EXISTS "content_blocks_insert_admin" 
-ON public.content_blocks FOR INSERT 
-TO authenticated 
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to insert new content blocks
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_blocks' AND policyname = 'content_blocks_insert_admin'
+    ) THEN
+        CREATE POLICY "content_blocks_insert_admin" 
+        ON public.content_blocks FOR INSERT 
+        TO authenticated 
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to update content blocks
-CREATE POLICY IF NOT EXISTS "content_blocks_update_admin" 
-ON public.content_blocks FOR UPDATE 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-)
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to update content blocks
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_blocks' AND policyname = 'content_blocks_update_admin'
+    ) THEN
+        CREATE POLICY "content_blocks_update_admin" 
+        ON public.content_blocks FOR UPDATE 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        )
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
 
--- Policy: Allow admin users to delete content blocks
-CREATE POLICY IF NOT EXISTS "content_blocks_delete_admin" 
-ON public.content_blocks FOR DELETE 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE user_id = auth.uid() 
-        AND role = 'admin'
-    )
-);
+    -- Policy: Allow admin users to delete content blocks
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'content_blocks' AND policyname = 'content_blocks_delete_admin'
+    ) THEN
+        CREATE POLICY "content_blocks_delete_admin" 
+        ON public.content_blocks FOR DELETE 
+        TO authenticated 
+        USING (
+            EXISTS (
+                SELECT 1 FROM public.profiles 
+                WHERE user_id = auth.uid() 
+                AND role = 'admin'
+            )
+        );
+    END IF;
+END $$;
 
 -- =====================================================
 -- HELPER FUNCTIONS FOR ADMIN CHECKS

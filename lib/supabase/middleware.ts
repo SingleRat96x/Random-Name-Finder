@@ -75,7 +75,7 @@ export async function updateSession(request: NextRequest) {
     // Check if user is accessing a protected route
     const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
                             request.nextUrl.pathname.startsWith('/profile');
-    
+
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
     // If no session and trying to access protected route, redirect to login

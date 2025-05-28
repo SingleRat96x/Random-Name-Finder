@@ -42,15 +42,31 @@ COMMENT ON COLUMN public.content_pages.updated_at IS 'Timestamp when the page wa
 -- Create index on slug for fast lookups
 CREATE INDEX IF NOT EXISTS idx_content_pages_slug ON public.content_pages(slug);
 
--- Add constraint to ensure slug follows URL-friendly format
-ALTER TABLE public.content_pages 
-ADD CONSTRAINT IF NOT EXISTS chk_content_pages_slug_format 
-CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$');
+-- Add constraints to ensure data integrity (idempotent)
+DO $$
+BEGIN
+    -- Add constraint to ensure slug follows URL-friendly format
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_content_pages_slug_format' 
+        AND table_name = 'content_pages'
+    ) THEN
+        ALTER TABLE public.content_pages 
+        ADD CONSTRAINT chk_content_pages_slug_format 
+        CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$');
+    END IF;
 
--- Add constraint to ensure title is not empty
-ALTER TABLE public.content_pages 
-ADD CONSTRAINT IF NOT EXISTS chk_content_pages_title_not_empty 
-CHECK (LENGTH(TRIM(title)) > 0);
+    -- Add constraint to ensure title is not empty
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_content_pages_title_not_empty' 
+        AND table_name = 'content_pages'
+    ) THEN
+        ALTER TABLE public.content_pages 
+        ADD CONSTRAINT chk_content_pages_title_not_empty 
+        CHECK (LENGTH(TRIM(title)) > 0);
+    END IF;
+END $$;
 
 -- Create function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_content_pages_updated_at()

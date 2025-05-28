@@ -82,8 +82,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         console.error('Error during logout:', error);
         // If signOut fails, manually trigger state clearing as fallback
-        setUser(null);
-        setSession(null);
+      setUser(null);
+      setSession(null);
         setProfile(null);
         setIsLoading(false);
       }
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Refresh to ensure server-side state consistency
       // Use a longer delay to ensure navigation completes
       setTimeout(() => {
-        router.refresh();
+      router.refresh();
       }, 200);
 
     } catch (err) {
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
       router.push('/');
       setTimeout(() => {
-        router.refresh();
+      router.refresh();
       }, 200);
     }
   };
@@ -125,8 +125,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Handle specific auth events
         if (event === 'INITIAL_SESSION') {
           console.log('Initial session loaded:', session?.user?.id);
-          setSession(session);
-          setUser(session?.user ?? null);
+        setSession(session);
+        setUser(session?.user ?? null);
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
@@ -135,8 +135,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
           
           setInitialCheckDone(true);
-          setIsLoading(false);
-          
+        setIsLoading(false);
+
         } else if (event === 'SIGNED_IN') {
           console.log('User signed in:', session?.user?.id);
           setSession(session);
@@ -162,9 +162,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
-          }
+      }
           setIsLoading(false);
-          
+
         } else {
           // Handle any other events
           console.log('Other auth event:', event);
@@ -188,7 +188,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsLoading(false);
         setInitialCheckDone(true);
       }
-    }, 3000);
+    }, 9000);
 
     // Cleanup
     return () => {
