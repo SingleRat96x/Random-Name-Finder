@@ -4,12 +4,32 @@ export interface Tool {
   slug: string;
   description: string | null;
   ai_prompt_category: string;
-  ai_model_preference: string | null;
+  default_ai_model_identifier: string | null;
+  available_ai_model_identifiers: string[];
   default_parameters: Record<string, unknown>;
   configurable_fields: ConfigurableField[];
   is_published: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface AIModel {
+  id: string;
+  model_identifier: string;
+  display_name: string;
+  provider_name: string;
+  capabilities_tags: string[];
+  is_active: boolean;
+  notes_for_admin: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AvailableAIModel {
+  model_identifier: string;
+  display_name: string;
+  provider_name: string;
+  capabilities_tags: string[];
 }
 
 export interface ConfigurableField {
@@ -37,7 +57,7 @@ export interface ContentBlock {
 
 export interface AIGenerationRequest {
   ai_prompt_category: string;
-  ai_model_preference?: string;
+  default_ai_model_identifier?: string;
   parameters: Record<string, unknown>;
 }
 

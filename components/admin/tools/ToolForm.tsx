@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,29 +9,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { addTool, updateTool, generateSlug, type Tool } from '../../../app/(admin)/admin/tools/actions';
+import { fetchActiveAIModels } from '../../../app/(admin)/admin/ai-models/actions';
+import { AIModel } from '@/lib/types/tools';
 
 interface ToolFormProps {
   initialData?: Tool | null;
   mode: 'create' | 'edit';
 }
 
-const AI_MODELS = [
-  'mistralai/devstral-small:free',
-  'meta-llama/llama-3.3-8b-instruct:free',
-  'openai/gpt-3.5-turbo',
-  'google/gemini-2.0-flash-exp:free',
-  'openai/gpt-4',
-  'openai/gpt-4-turbo',
-  'anthropic/claude-3-haiku',
-  'anthropic/claude-3-sonnet',
-  'anthropic/claude-3-opus',
-];
-
 export default function ToolForm({ initialData, mode }: ToolFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [aiModels, setAiModels] = useState<AIModel[]>([]);
+  const [loadingModels, setLoadingModels] = useState(true);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -40,11 +33,29 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
     description: initialData?.description || '',
     icon_name: initialData?.icon_name || '',
     ai_prompt_category: initialData?.ai_prompt_category || '',
-    ai_model_preference: initialData?.ai_model_preference || '',
+    default_ai_model_identifier: initialData?.default_ai_model_identifier || '',
+    available_ai_model_identifiers: initialData?.available_ai_model_identifiers || [],
     default_parameters: JSON.stringify(initialData?.default_parameters || {}, null, 2),
     configurable_fields: JSON.stringify(initialData?.configurable_fields || [], null, 2),
     is_published: initialData?.is_published || false,
   });
+
+  // Load AI models on component mount
+  useEffect(() => {
+    const loadAIModels = async () => {
+      try {
+        const models = await fetchActiveAIModels();
+        setAiModels(models);
+      } catch (error) {
+        console.error('Failed to load AI models:', error);
+        toast.error('Failed to load AI models');
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+
+    loadAIModels();
+  }, []);
 
   // Auto-generate slug from name
   const handleNameChange = async (name: string) => {
@@ -55,6 +66,16 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
       const generatedSlug = await generateSlug(name);
       setFormData(prev => ({ ...prev, slug: generatedSlug }));
     }
+  };
+
+  // Handle available AI models selection
+  const handleAvailableModelsChange = (modelIdentifier: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      available_ai_model_identifiers: checked
+        ? [...prev.available_ai_model_identifiers, modelIdentifier]
+        : prev.available_ai_model_identifiers.filter(id => id !== modelIdentifier)
+    }));
   };
 
   // Validate JSON fields
@@ -115,6 +136,8 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'is_published') {
           formDataToSubmit.append(key, value.toString());
+        } else if (key === 'available_ai_model_identifiers') {
+          formDataToSubmit.append(key, JSON.stringify(value));
         } else {
           formDataToSubmit.append(key, value as string);
         }
@@ -219,22 +242,62 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ai_model_preference">Preferred AI Model</Label>
+            <Label htmlFor="default_ai_model_identifier">Default AI Model</Label>
             <Select
-              value={formData.ai_model_preference}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, ai_model_preference: value }))}
+              value={formData.default_ai_model_identifier}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, default_ai_model_identifier: value }))}
+              disabled={loadingModels}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select an AI model" />
+                <SelectValue placeholder={loadingModels ? "Loading models..." : "Select default AI model"} />
               </SelectTrigger>
               <SelectContent>
-                {AI_MODELS.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
+                {aiModels.map((model) => (
+                  <SelectItem key={model.model_identifier} value={model.model_identifier}>
+                    <div className="flex items-center space-x-2">
+                      <span>{model.display_name}</span>
+                      <span className="text-xs text-muted-foreground">({model.provider_name})</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground">
+              The primary AI model used for this tool.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Available AI Models</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4 border rounded-lg">
+              {loadingModels ? (
+                <p className="text-sm text-muted-foreground">Loading AI models...</p>
+              ) : aiModels.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No AI models available. Please add some in the AI Models section.</p>
+              ) : (
+                aiModels.map((model) => (
+                  <div key={model.model_identifier} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`model-${model.model_identifier}`}
+                      checked={formData.available_ai_model_identifiers.includes(model.model_identifier)}
+                      onCheckedChange={(checked) => 
+                        handleAvailableModelsChange(model.model_identifier, checked as boolean)
+                      }
+                    />
+                    <Label 
+                      htmlFor={`model-${model.model_identifier}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {model.display_name}
+                      <span className="text-xs text-muted-foreground ml-1">({model.provider_name})</span>
+                    </Label>
+                  </div>
+                ))
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Select which AI models users can choose from when using this tool.
+            </p>
           </div>
         </CardContent>
       </Card>

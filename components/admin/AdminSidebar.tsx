@@ -8,7 +8,8 @@ import {
   Settings, 
   FileText,
   Shield,
-  Wrench
+  Wrench,
+  Brain
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -31,6 +32,11 @@ const adminNavItems = [
     name: 'Tools',
     href: '/admin/tools',
     icon: Wrench,
+  },
+  {
+    name: 'AI Models',
+    href: '/admin/ai-models',
+    icon: Brain,
   },
   {
     name: 'Settings',

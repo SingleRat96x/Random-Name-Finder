@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Sparkles } from 'lucide-react';
-import { ConfigurableField, AIGenerationResponse } from '@/lib/types/tools';
+import { Loader2, Sparkles, Brain } from 'lucide-react';
+import { ConfigurableField, AIGenerationResponse, AvailableAIModel } from '@/lib/types/tools';
 import { generateNamesAction } from '@/app/tools/[toolSlug]/actions';
 
 interface ToolInputFormProps {
@@ -18,7 +19,8 @@ interface ToolInputFormProps {
   configurable_fields: ConfigurableField[];
   default_parameters: Record<string, unknown>;
   ai_prompt_category: string;
-  ai_model_preference?: string | null;
+  default_ai_model_identifier?: string | null;
+  available_ai_models: AvailableAIModel[];
   onNamesGenerated: (names: string[]) => void;
   onError: (error: string) => void;
 }
@@ -28,7 +30,8 @@ export function ToolInputForm({
   configurable_fields,
   default_parameters,
   ai_prompt_category,
-  ai_model_preference,
+  default_ai_model_identifier,
+  available_ai_models,
   onNamesGenerated,
   onError
 }: ToolInputFormProps) {
@@ -47,8 +50,14 @@ export function ToolInputForm({
     return initialValues;
   });
   
+  const [selectedAIModel, setSelectedAIModel] = useState<string>('default');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get default AI model display name for the default option
+  const defaultModelDisplayName = available_ai_models.find(
+    model => model.model_identifier === default_ai_model_identifier
+  )?.display_name || 'Default Model';
 
   const handleInputChange = (fieldName: string, value: unknown) => {
     setFormValues(prev => ({
@@ -67,8 +76,11 @@ export function ToolInputForm({
       // Create FormData
       const formData = new FormData();
       formData.append('ai_prompt_category', ai_prompt_category);
-      if (ai_model_preference) {
-        formData.append('ai_model_preference', ai_model_preference);
+      
+      // Use selected AI model or default
+      const modelToUse = selectedAIModel === 'default' ? default_ai_model_identifier : selectedAIModel;
+      if (modelToUse) {
+        formData.append('selected_ai_model_identifier', modelToUse);
       }
       
       // Add all form values
@@ -97,6 +109,55 @@ export function ToolInputForm({
 
   const renderField = (field: ConfigurableField) => {
     const value = formValues[field.name];
+    
+    // Special handling for name_length_preference field
+    if (field.name === 'name_length_preference' && field.type === 'select') {
+      const lengthOptions = field.options || ['Any', 'Short', 'Medium', 'Long'];
+      return (
+        <div key={field.name} className="space-y-2">
+          <Label htmlFor={field.name}>{field.label}</Label>
+          <Select
+            value={String(value || '')}
+            onValueChange={(newValue) => handleInputChange(field.name, newValue)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select name length preference" />
+            </SelectTrigger>
+            <SelectContent>
+              {lengthOptions.map((option) => (
+                <SelectItem key={option} value={option.toLowerCase()}>
+                  {option === 'Short' && 'Short (5-8 chars)'}
+                  {option === 'Medium' && 'Medium (8-12 chars)'}
+                  {option === 'Long' && 'Long (12+ chars)'}
+                  {option === 'Any' && 'Any Length'}
+                  {!['Short', 'Medium', 'Long', 'Any'].includes(option) && option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    // Special handling for keyword field
+    if (field.name === 'keyword' && field.type === 'text') {
+      return (
+        <div key={field.name} className="space-y-2">
+          <Label htmlFor={field.name}>{field.label}</Label>
+          <Input
+            id={field.name}
+            type="text"
+            value={String(value || '')}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            placeholder={field.placeholder || 'e.g., Moon, Shadow, Fire'}
+            required={field.required}
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional: Include a specific word or theme in some of the generated names
+          </p>
+        </div>
+      );
+    }
     
     switch (field.type) {
       case 'text':
@@ -197,13 +258,61 @@ export function ToolInputForm({
       </CardHeader>
       
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           
+          {/* AI Model Selection */}
+          {available_ai_models.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="ai-model-select" className="flex items-center space-x-2">
+                <Brain className="h-4 w-4" />
+                <span>AI Model (Optional)</span>
+              </Label>
+              <Select
+                value={selectedAIModel}
+                onValueChange={setSelectedAIModel}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Default (${defaultModelDisplayName})`} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">
+                    <div className="flex items-center space-x-2">
+                      <span>Default ({defaultModelDisplayName})</span>
+                    </div>
+                  </SelectItem>
+                  {available_ai_models.map((model) => (
+                    <SelectItem key={model.model_identifier} value={model.model_identifier}>
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span>{model.display_name}</span>
+                          <span className="text-xs text-muted-foreground">({model.provider_name})</span>
+                        </div>
+                        {model.capabilities_tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {model.capabilities_tags.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose a specific AI model or use the default for this tool
+              </p>
+            </div>
+          )}
+          
+          {/* Dynamic Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {configurable_fields.map(renderField)}
           </div>

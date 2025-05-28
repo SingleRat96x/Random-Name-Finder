@@ -11,7 +11,8 @@ export interface Tool {
   description: string | null;
   icon_name: string | null;
   ai_prompt_category: string;
-  ai_model_preference: string | null;
+  default_ai_model_identifier: string | null;
+  available_ai_model_identifiers: string[];
   default_parameters: Record<string, unknown>;
   configurable_fields: Array<Record<string, unknown>>;
   is_published: boolean;
@@ -103,7 +104,8 @@ export async function addTool(formData: FormData) {
   const description = formData.get('description') as string;
   const iconName = formData.get('icon_name') as string;
   const aiPromptCategory = formData.get('ai_prompt_category') as string;
-  const aiModelPreference = formData.get('ai_model_preference') as string;
+  const defaultAiModelIdentifier = formData.get('default_ai_model_identifier') as string;
+  const availableAiModelIdentifiersStr = formData.get('available_ai_model_identifiers') as string;
   const defaultParametersStr = formData.get('default_parameters') as string;
   const configurableFieldsStr = formData.get('configurable_fields') as string;
   const isPublished = formData.get('is_published') === 'true';
@@ -116,6 +118,7 @@ export async function addTool(formData: FormData) {
   // Parse JSON fields
   const defaultParameters = parseJsonSafely(defaultParametersStr, 'default_parameters');
   const configurableFields = parseJsonSafely(configurableFieldsStr, 'configurable_fields');
+  const availableAiModelIdentifiers = parseJsonSafely(availableAiModelIdentifiersStr, 'available_ai_model_identifiers') as string[];
   
   // Insert the new tool
   const { error } = await supabase
@@ -126,7 +129,8 @@ export async function addTool(formData: FormData) {
       description: description || null,
       icon_name: iconName || null,
       ai_prompt_category: aiPromptCategory,
-      ai_model_preference: aiModelPreference || null,
+      default_ai_model_identifier: defaultAiModelIdentifier || null,
+      available_ai_model_identifiers: availableAiModelIdentifiers,
       default_parameters: defaultParameters,
       configurable_fields: configurableFields,
       is_published: isPublished,
@@ -162,7 +166,8 @@ export async function updateTool(formData: FormData) {
   const description = formData.get('description') as string;
   const iconName = formData.get('icon_name') as string;
   const aiPromptCategory = formData.get('ai_prompt_category') as string;
-  const aiModelPreference = formData.get('ai_model_preference') as string;
+  const defaultAiModelIdentifier = formData.get('default_ai_model_identifier') as string;
+  const availableAiModelIdentifiersStr = formData.get('available_ai_model_identifiers') as string;
   const defaultParametersStr = formData.get('default_parameters') as string;
   const configurableFieldsStr = formData.get('configurable_fields') as string;
   const isPublished = formData.get('is_published') === 'true';
@@ -175,6 +180,7 @@ export async function updateTool(formData: FormData) {
   // Parse JSON fields
   const defaultParameters = parseJsonSafely(defaultParametersStr, 'default_parameters');
   const configurableFields = parseJsonSafely(configurableFieldsStr, 'configurable_fields');
+  const availableAiModelIdentifiers = parseJsonSafely(availableAiModelIdentifiersStr, 'available_ai_model_identifiers') as string[];
   
   // Update the tool
   const { error } = await supabase
@@ -185,7 +191,8 @@ export async function updateTool(formData: FormData) {
       description: description || null,
       icon_name: iconName || null,
       ai_prompt_category: aiPromptCategory,
-      ai_model_preference: aiModelPreference || null,
+      default_ai_model_identifier: defaultAiModelIdentifier || null,
+      available_ai_model_identifiers: availableAiModelIdentifiers,
       default_parameters: defaultParameters,
       configurable_fields: configurableFields,
       is_published: isPublished,

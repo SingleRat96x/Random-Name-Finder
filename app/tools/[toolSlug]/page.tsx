@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { fetchToolBySlug, fetchToolContentBlocks } from '@/lib/supabase/server';
+import { fetchToolBySlug, fetchToolContentBlocks, fetchAvailableAIModels } from '@/lib/supabase/server';
 import { ContentBlockRenderer } from '@/components/content/ContentBlockRenderer';
 import { ToolPageClient } from './ToolPageClient';
 
@@ -46,6 +46,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
     notFound();
   }
 
+  // Fetch available AI models for this tool
+  const availableAIModels = await fetchAvailableAIModels(tool.available_ai_model_identifiers || []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -68,7 +71,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
             configurable_fields={tool.configurable_fields}
             default_parameters={tool.default_parameters}
             ai_prompt_category={tool.ai_prompt_category}
-            ai_model_preference={tool.ai_model_preference}
+            default_ai_model_identifier={tool.default_ai_model_identifier}
+            available_ai_models={availableAIModels}
           />
         </div>
 

@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { ToolInputForm } from '@/components/tools/ToolInputForm';
 import { NameResultsDisplay } from '@/components/tools/NameResultsDisplay';
-import { ConfigurableField } from '@/lib/types/tools';
+import { ConfigurableField, AvailableAIModel } from '@/lib/types/tools';
 
 interface ToolPageClientProps {
   toolName: string;
   configurable_fields: ConfigurableField[];
   default_parameters: Record<string, unknown>;
   ai_prompt_category: string;
-  ai_model_preference?: string | null;
+  default_ai_model_identifier?: string | null;
+  available_ai_models: AvailableAIModel[];
 }
 
 export function ToolPageClient({
@@ -18,7 +19,8 @@ export function ToolPageClient({
   configurable_fields,
   default_parameters,
   ai_prompt_category,
-  ai_model_preference
+  default_ai_model_identifier,
+  available_ai_models
 }: ToolPageClientProps) {
   const [generatedNames, setGeneratedNames] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +46,8 @@ export function ToolPageClient({
         configurable_fields={configurable_fields}
         default_parameters={default_parameters}
         ai_prompt_category={ai_prompt_category}
-        ai_model_preference={ai_model_preference}
+        default_ai_model_identifier={default_ai_model_identifier}
+        available_ai_models={available_ai_models}
         onNamesGenerated={handleNamesGenerated}
         onError={handleError}
       />

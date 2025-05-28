@@ -10,9 +10,11 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
   try {
     // Extract form data
     const aiPromptCategory = formData.get('ai_prompt_category') as string;
-    const aiModelPreference = formData.get('ai_model_preference') as string;
+    const selectedAIModelIdentifier = formData.get('selected_ai_model_identifier') as string;
     const tone = formData.get('tone') as string;
     const count = parseInt(formData.get('count') as string, 10);
+    const keyword = formData.get('keyword') as string;
+    const nameLengthPreference = formData.get('name_length_preference') as string;
     
     // Validate inputs
     if (!aiPromptCategory) {
@@ -34,7 +36,15 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
     }
     
     // Construct the prompt based on the category and parameters
-    const prompt = constructPrompt(aiPromptCategory, { tone, count });
+    const prompt = constructPrompt(aiPromptCategory, { 
+      tone, 
+      count, 
+      keyword, 
+      nameLengthPreference 
+    });
+    
+    // Determine which AI model to use
+    const modelToUse = selectedAIModelIdentifier || 'anthropic/claude-3.5-sonnet';
     
     // Make API call to OpenRouter
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -46,7 +56,7 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
         'X-Title': 'Random Name Finder'
       },
       body: JSON.stringify({
-        model: aiModelPreference || 'anthropic/claude-3.5-sonnet',
+        model: modelToUse,
         messages: [
           {
             role: 'user',
@@ -58,9 +68,28 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
       })
     });
     
+    // Handle specific error cases
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenRouter API error:', response.status, errorText);
+      
+      // Handle 429 rate limit errors specifically
+      if (response.status === 429) {
+        // Try to get the model name for a better error message
+        let modelName = modelToUse;
+        try {
+          // Extract model name from identifier if possible
+          modelName = modelToUse.split('/').pop() || modelToUse;
+        } catch {
+          // Use the identifier as-is if parsing fails
+        }
+        
+        return { 
+          success: false, 
+          error: `The selected AI model (${modelName}) is currently experiencing high traffic or is rate-limited. Please try again in a few moments, or select a different AI model if available.`
+        };
+      }
+      
       return { 
         success: false, 
         error: 'Failed to generate names. Please try again.' 
@@ -103,7 +132,7 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
  * Construct AI prompt based on category and parameters
  */
 function constructPrompt(category: string, parameters: Record<string, unknown>): string {
-  const { tone, count } = parameters;
+  const { tone, count, keyword, nameLengthPreference } = parameters;
   
   let basePrompt = '';
   
@@ -131,6 +160,26 @@ function constructPrompt(category: string, parameters: Record<string, unknown>):
       if (tone) {
         basePrompt += ` with a ${tone} tone`;
       }
+  }
+  
+  // Add keyword requirement if provided
+  if (keyword && typeof keyword === 'string' && keyword.trim()) {
+    basePrompt += `. Include the word "${keyword.trim()}" in some of the names`;
+  }
+  
+  // Add length preference if provided
+  if (nameLengthPreference && typeof nameLengthPreference === 'string' && nameLengthPreference !== 'any') {
+    switch (nameLengthPreference.toLowerCase()) {
+      case 'short':
+        basePrompt += '. Generate names that are generally short (around 5-8 characters)';
+        break;
+      case 'medium':
+        basePrompt += '. Generate names that are generally medium length (around 8-12 characters)';
+        break;
+      case 'long':
+        basePrompt += '. Generate names that are generally long (12+ characters)';
+        break;
+    }
   }
   
   basePrompt += `. Please provide only the names, one per line, without numbers, bullets, or additional text. Each name should be on its own line.`;

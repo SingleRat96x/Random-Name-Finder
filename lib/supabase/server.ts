@@ -81,7 +81,7 @@ export async function fetchToolBySlug(slug: string) {
   
   const { data: tool, error } = await supabase
     .from('tools')
-    .select('id, name, slug, description, ai_prompt_category, ai_model_preference, default_parameters, configurable_fields, is_published')
+    .select('id, name, slug, description, ai_prompt_category, default_ai_model_identifier, available_ai_model_identifiers, default_parameters, configurable_fields, is_published')
     .eq('slug', slug)
     .eq('is_published', true) // Only fetch published tools for public pages
     .single();
@@ -113,4 +113,29 @@ export async function fetchToolContentBlocks(toolSlug: string) {
   }
   
   return blocks || [];
+}
+
+/**
+ * Fetch available AI models by their identifiers
+ */
+export async function fetchAvailableAIModels(modelIdentifiers: string[]) {
+  if (!modelIdentifiers || modelIdentifiers.length === 0) {
+    return [];
+  }
+
+  const supabase = await createServerActionClient();
+  
+  const { data: models, error } = await supabase
+    .from('ai_models')
+    .select('model_identifier, display_name, provider_name, capabilities_tags')
+    .in('model_identifier', modelIdentifiers)
+    .eq('is_active', true)
+    .order('display_name', { ascending: true });
+    
+  if (error) {
+    console.error('Error fetching available AI models:', error);
+    return [];
+  }
+  
+  return models || [];
 } 
