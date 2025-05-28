@@ -10,10 +10,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { addTool, updateTool, generateSlug, type Tool } from '../../../app/(admin)/admin/tools/actions';
 import { fetchActiveAIModels } from '../../../app/(admin)/admin/ai-models/actions';
 import { AIModel } from '@/lib/types/tools';
+import { ConfigurableFieldsGuideModal } from './ConfigurableFieldsGuideModal';
 
 interface ToolFormProps {
   initialData?: Tool | null;
@@ -25,6 +27,7 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [aiModels, setAiModels] = useState<AIModel[]>([]);
   const [loadingModels, setLoadingModels] = useState(true);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -326,7 +329,18 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="configurable_fields">Configurable Fields (JSON)</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="configurable_fields">Configurable Fields (JSON)</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsGuideModalOpen(true)}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Documentation
+              </Button>
+            </div>
             <Textarea
               id="configurable_fields"
               value={formData.configurable_fields}
@@ -379,6 +393,12 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
           {isLoading ? 'Saving...' : mode === 'create' ? 'Create Tool' : 'Update Tool'}
         </Button>
       </div>
+
+      {/* Documentation Modal */}
+      <ConfigurableFieldsGuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+      />
     </form>
   );
 } 
