@@ -16,6 +16,10 @@ import {
   updateContentBlock, 
   fetchContentBlockTypes 
 } from '@/app/(admin)/admin/content/actions';
+import { 
+  addContentBlockForTool,
+  updateContentBlock as updateToolContentBlock
+} from '@/app/(admin)/admin/tools/content/actions';
 
 interface ContentBlock {
   id: string;
@@ -32,7 +36,8 @@ interface ContentBlockFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  pageId: string;
+  pageId: string | null;
+  toolSlug?: string | null;
   editingBlock: ContentBlock | null;
   nextSortOrder: number;
 }
@@ -47,7 +52,8 @@ export function ContentBlockForm({
   isOpen, 
   onClose, 
   onSave, 
-  pageId, 
+  pageId,
+  toolSlug, 
   editingBlock, 
   nextSortOrder 
 }: ContentBlockFormProps) {
@@ -55,6 +61,9 @@ export function ContentBlockForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedBlockType, setSelectedBlockType] = useState<string>('');
+
+  // Determine if we're in tool mode
+  const isToolMode = !!toolSlug;
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
@@ -112,19 +121,38 @@ export function ContentBlockForm({
       setError(null);
 
       if (editingBlock) {
-        await updateContentBlock(
-          editingBlock.id,
-          data.block_type,
-          data.content_data,
-          data.sort_order
-        );
+        // For updates, use the appropriate action based on context
+        if (isToolMode && toolSlug) {
+          const formData = new FormData();
+          formData.append('block_id', editingBlock.id);
+          formData.append('block_type', data.block_type);
+          formData.append('content_data', JSON.stringify(data.content_data));
+          formData.append('tool_slug', toolSlug);
+          await updateToolContentBlock(formData);
+        } else if (pageId) {
+          await updateContentBlock(
+            editingBlock.id,
+            data.block_type,
+            data.content_data,
+            data.sort_order
+          );
+        }
       } else {
-        await addContentBlock(
-          pageId,
-          data.block_type,
-          data.content_data,
-          data.sort_order
-        );
+        // For new blocks, use the appropriate action
+        if (isToolMode && toolSlug) {
+          const formData = new FormData();
+          formData.append('tool_slug', toolSlug);
+          formData.append('block_type', data.block_type);
+          formData.append('content_data', JSON.stringify(data.content_data));
+          await addContentBlockForTool(formData);
+        } else if (pageId) {
+          await addContentBlock(
+            pageId,
+            data.block_type,
+            data.content_data,
+            data.sort_order
+          );
+        }
       }
 
       onSave();

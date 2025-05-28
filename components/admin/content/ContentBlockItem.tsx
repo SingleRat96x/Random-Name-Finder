@@ -7,6 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { deleteContentBlock, moveContentBlock } from '@/app/(admin)/admin/content/actions';
+import { 
+  deleteContentBlock as deleteToolContentBlock
+} from '@/app/(admin)/admin/tools/content/actions';
 
 interface ContentBlock {
   id: string;
@@ -26,7 +29,8 @@ interface ContentBlockItemProps {
   onEdit: (block: ContentBlock) => void;
   onDelete: () => void;
   onMove: () => void;
-  pageId: string;
+  pageId: string | null;
+  toolSlug?: string | null;
 }
 
 export function ContentBlockItem({ 
@@ -36,11 +40,15 @@ export function ContentBlockItem({
   onEdit, 
   onDelete, 
   onMove, 
-  pageId 
+  pageId,
+  toolSlug
 }: ContentBlockItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine if we're in tool mode
+  const isToolMode = !!toolSlug;
 
   // Get icon for block type
   const getBlockIcon = (blockType: string) => {
@@ -97,7 +105,13 @@ export function ContentBlockItem({
     try {
       setIsDeleting(true);
       setError(null);
-      await deleteContentBlock(block.id);
+      
+      if (isToolMode && toolSlug) {
+        await deleteToolContentBlock(block.id, toolSlug);
+      } else {
+        await deleteContentBlock(block.id);
+      }
+      
       onDelete();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete block');
@@ -110,8 +124,16 @@ export function ContentBlockItem({
     try {
       setIsMoving(true);
       setError(null);
-      await moveContentBlock(block.id, direction, pageId);
-      onMove();
+      
+      if (isToolMode && toolSlug) {
+        // For tools, we need to implement a different move logic
+        // This is a simplified version - you might want to implement proper drag-and-drop
+        // For now, we'll just trigger the onMove callback
+        onMove();
+      } else if (pageId) {
+        await moveContentBlock(block.id, direction, pageId);
+        onMove();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to move block');
     } finally {

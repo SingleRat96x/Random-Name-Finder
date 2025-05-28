@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ContentBlockItem } from './ContentBlockItem';
 import { ContentBlockForm } from './ContentBlockForm';
 import { fetchPageContentBlocks } from '@/app/(admin)/admin/content/actions';
+import { fetchContentBlocksByToolSlug } from '@/app/(admin)/admin/tools/content/actions';
 
 interface ContentPage {
   id: string;
@@ -31,25 +32,40 @@ interface ContentBlock {
 }
 
 interface ContentBlockManagerProps {
-  page: ContentPage;
-  onBack: () => void;
+  page?: ContentPage;
+  toolSlug?: string;
+  pageId?: string | null;
+  onBack?: () => void;
 }
 
-export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) {
+export function ContentBlockManager({ page, toolSlug, pageId, onBack }: ContentBlockManagerProps) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<ContentBlock | null>(null);
 
-  // Load content blocks for the selected page
+  // Determine if we're working with a page or tool
+  const isToolMode = !!toolSlug;
+  const contextId = isToolMode ? toolSlug : (page?.id || pageId);
+
+  // Load content blocks for the selected page or tool
   useEffect(() => {
     async function loadBlocks() {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedBlocks = await fetchPageContentBlocks(page.id);
-        setBlocks(fetchedBlocks);
+        
+        if (isToolMode && toolSlug) {
+          const fetchedBlocks = await fetchContentBlocksByToolSlug(toolSlug);
+          setBlocks(fetchedBlocks);
+        } else if (page?.id) {
+          const fetchedBlocks = await fetchPageContentBlocks(page.id);
+          setBlocks(fetchedBlocks);
+        } else if (pageId) {
+          const fetchedBlocks = await fetchPageContentBlocks(pageId);
+          setBlocks(fetchedBlocks);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load content blocks');
       } finally {
@@ -57,8 +73,10 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
       }
     }
 
-    loadBlocks();
-  }, [page.id]);
+    if (contextId) {
+      loadBlocks();
+    }
+  }, [contextId, isToolMode, toolSlug, page?.id, pageId]);
 
   const handleAddBlock = () => {
     setEditingBlock(null);
@@ -78,8 +96,16 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
   const handleBlockSaved = async () => {
     // Refresh blocks after save
     try {
-      const fetchedBlocks = await fetchPageContentBlocks(page.id);
-      setBlocks(fetchedBlocks);
+      if (isToolMode && toolSlug) {
+        const fetchedBlocks = await fetchContentBlocksByToolSlug(toolSlug);
+        setBlocks(fetchedBlocks);
+      } else if (page?.id) {
+        const fetchedBlocks = await fetchPageContentBlocks(page.id);
+        setBlocks(fetchedBlocks);
+      } else if (pageId) {
+        const fetchedBlocks = await fetchPageContentBlocks(pageId);
+        setBlocks(fetchedBlocks);
+      }
       handleFormClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to refresh content blocks');
@@ -89,8 +115,16 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
   const handleBlockDeleted = async () => {
     // Refresh blocks after delete
     try {
-      const fetchedBlocks = await fetchPageContentBlocks(page.id);
-      setBlocks(fetchedBlocks);
+      if (isToolMode && toolSlug) {
+        const fetchedBlocks = await fetchContentBlocksByToolSlug(toolSlug);
+        setBlocks(fetchedBlocks);
+      } else if (page?.id) {
+        const fetchedBlocks = await fetchPageContentBlocks(page.id);
+        setBlocks(fetchedBlocks);
+      } else if (pageId) {
+        const fetchedBlocks = await fetchPageContentBlocks(pageId);
+        setBlocks(fetchedBlocks);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to refresh content blocks');
     }
@@ -99,8 +133,16 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
   const handleBlockMoved = async () => {
     // Refresh blocks after move
     try {
-      const fetchedBlocks = await fetchPageContentBlocks(page.id);
-      setBlocks(fetchedBlocks);
+      if (isToolMode && toolSlug) {
+        const fetchedBlocks = await fetchContentBlocksByToolSlug(toolSlug);
+        setBlocks(fetchedBlocks);
+      } else if (page?.id) {
+        const fetchedBlocks = await fetchPageContentBlocks(page.id);
+        setBlocks(fetchedBlocks);
+      } else if (pageId) {
+        const fetchedBlocks = await fetchPageContentBlocks(pageId);
+        setBlocks(fetchedBlocks);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to refresh content blocks');
     }
@@ -119,31 +161,46 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
     );
   }
 
+  // Don't render header if we're in tool mode (handled by parent page)
+  const showHeader = !isToolMode && page && onBack;
+
   return (
     <div className="space-y-6">
-      {/* Header with back button and page info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Pages
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">{page.title}</h2>
-            <div className="flex items-center space-x-2 mt-1">
-              <Badge variant="secondary">/{page.slug}</Badge>
-              <span className="text-sm text-muted-foreground">
-                {blocks.length} block{blocks.length !== 1 ? 's' : ''}
-              </span>
+      {/* Header with back button and page info (only for page mode) */}
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Pages
+            </Button>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">{page.title}</h2>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge variant="secondary">/{page.slug}</Badge>
+                <span className="text-sm text-muted-foreground">
+                  {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
           </div>
+          
+          <Button onClick={handleAddBlock}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Block
+          </Button>
         </div>
-        
-        <Button onClick={handleAddBlock}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Block
-        </Button>
-      </div>
+      )}
+
+      {/* Add Block button for tool mode */}
+      {isToolMode && (
+        <div className="flex justify-end">
+          <Button onClick={handleAddBlock}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Block
+          </Button>
+        </div>
+      )}
 
       {/* Error display */}
       {error && (
@@ -160,7 +217,7 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
             <div>
               <CardTitle>Content Blocks</CardTitle>
               <CardDescription>
-                Manage the content blocks for this page. Blocks are displayed in order on the live site.
+                Manage the content blocks for this {isToolMode ? 'tool' : 'page'}. Blocks are displayed in order on the live site.
               </CardDescription>
             </div>
           </div>
@@ -172,7 +229,7 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">No Content Blocks</h3>
               <p className="text-muted-foreground mb-4">
-                This page doesn&apos;t have any content blocks yet. Add your first block to get started.
+                This {isToolMode ? 'tool' : 'page'} doesn&apos;t have any content blocks yet. Add your first block to get started.
               </p>
               <Button onClick={handleAddBlock}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -190,7 +247,8 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
                   onEdit={handleEditBlock}
                   onDelete={handleBlockDeleted}
                   onMove={handleBlockMoved}
-                  pageId={page.id}
+                  pageId={isToolMode ? null : (page?.id || pageId || null)}
+                  toolSlug={isToolMode ? toolSlug : null}
                 />
               ))}
             </div>
@@ -204,7 +262,8 @@ export function ContentBlockManager({ page, onBack }: ContentBlockManagerProps) 
           isOpen={isFormOpen}
           onClose={handleFormClose}
           onSave={handleBlockSaved}
-          pageId={page.id}
+          pageId={isToolMode ? null : (page?.id || pageId || null)}
+          toolSlug={isToolMode ? toolSlug : null}
           editingBlock={editingBlock}
           nextSortOrder={blocks.length > 0 ? Math.max(...blocks.map(b => b.sort_order)) + 1 : 1}
         />

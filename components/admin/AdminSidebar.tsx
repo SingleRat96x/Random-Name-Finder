@@ -7,7 +7,8 @@ import {
   Users, 
   Settings, 
   FileText,
-  Shield
+  Shield,
+  Wrench
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -25,6 +26,11 @@ const adminNavItems = [
     name: 'Content',
     href: '/admin/content',
     icon: FileText,
+  },
+  {
+    name: 'Tools',
+    href: '/admin/tools',
+    icon: Wrench,
   },
   {
     name: 'Settings',
