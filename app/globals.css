@@ -153,3 +153,38 @@
     background-color: hsl(var(--foreground));
   }
 }
+
+/* Admin area custom scrollbar styling */
+.admin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Enhanced modal responsiveness */
+@media (max-width: 768px) {
+  [data-radix-dialog-content] {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 0 !important;
+  }
+}
+
+/* Better textarea and input focus states in modals */
+.modal-content textarea:focus,
+.modal-content input:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}

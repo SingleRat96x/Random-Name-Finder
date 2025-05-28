@@ -18,7 +18,10 @@ interface ToolFormProps {
 }
 
 const AI_MODELS = [
+  'mistralai/devstral-small:free',
+  'meta-llama/llama-3.3-8b-instruct:free',
   'openai/gpt-3.5-turbo',
+  'google/gemini-2.0-flash-exp:free',
   'openai/gpt-4',
   'openai/gpt-4-turbo',
   'anthropic/claude-3-haiku',

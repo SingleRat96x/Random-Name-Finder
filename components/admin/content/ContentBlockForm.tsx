@@ -198,6 +198,7 @@ export function ContentBlockForm({
             <Input
               id="heading-text"
               placeholder="Enter heading text"
+              className="text-base"
               {...register('content_data.text', { required: 'Heading text is required' })}
             />
             {headingError && (
@@ -214,7 +215,8 @@ export function ContentBlockForm({
             <Textarea
               id="paragraph-content"
               placeholder="Enter paragraph content (HTML allowed)"
-              rows={6}
+              rows={8}
+              className="min-h-[200px] resize-y"
               {...register('content_data.html_content', { required: 'Paragraph content is required' })}
             />
             {paragraphError && (
@@ -246,27 +248,29 @@ export function ContentBlockForm({
         const imageAltError = getNestedErrorMessage('content_data.alt');
         return (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="image-url">Image URL</Label>
-              <Input
-                id="image-url"
-                placeholder="Enter image URL"
-                {...register('content_data.url', { required: 'Image URL is required' })}
-              />
-              {imageUrlError && (
-                <p className="text-sm text-destructive">{imageUrlError}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="image-alt">Alt Text</Label>
-              <Input
-                id="image-alt"
-                placeholder="Enter alt text for accessibility"
-                {...register('content_data.alt', { required: 'Alt text is required' })}
-              />
-              {imageAltError && (
-                <p className="text-sm text-destructive">{imageAltError}</p>
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="image-url">Image URL</Label>
+                <Input
+                  id="image-url"
+                  placeholder="Enter image URL"
+                  {...register('content_data.url', { required: 'Image URL is required' })}
+                />
+                {imageUrlError && (
+                  <p className="text-sm text-destructive">{imageUrlError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image-alt">Alt Text</Label>
+                <Input
+                  id="image-alt"
+                  placeholder="Enter alt text for accessibility"
+                  {...register('content_data.alt', { required: 'Alt text is required' })}
+                />
+                {imageAltError && (
+                  <p className="text-sm text-destructive">{imageAltError}</p>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="image-caption">Caption (Optional)</Label>
@@ -286,7 +290,8 @@ export function ContentBlockForm({
             <Textarea
               id="generic-content"
               placeholder="Enter content data as JSON"
-              rows={4}
+              rows={6}
+              className="min-h-[150px] resize-y font-mono text-sm"
               {...register('content_data', { 
                 validate: (value) => {
                   if (typeof value === 'string') {
@@ -321,7 +326,7 @@ export function ContentBlockForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {editingBlock ? 'Edit Content Block' : 'Add Content Block'}
@@ -335,7 +340,7 @@ export function ContentBlockForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-6 pr-2 admin-scrollbar modal-content">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -350,48 +355,50 @@ export function ContentBlockForm({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="block-type">Block Type</Label>
-                  <Select
-                    value={watchedBlockType}
-                    onValueChange={(value) => {
-                      setValue('block_type', value);
-                      setValue('content_data', {}); // Reset content data when type changes
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a block type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {blockTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {formatBlockTypeName(type)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.block_type && (
-                    <p className="text-sm text-destructive">{errors.block_type.message}</p>
-                  )}
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="block-type">Block Type</Label>
+                    <Select
+                      value={watchedBlockType}
+                      onValueChange={(value) => {
+                        setValue('block_type', value);
+                        setValue('content_data', {}); // Reset content data when type changes
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a block type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blockTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {formatBlockTypeName(type)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.block_type && (
+                      <p className="text-sm text-destructive">{errors.block_type.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sort-order">Sort Order</Label>
-                  <Input
-                    id="sort-order"
-                    type="number"
-                    min="1"
-                    {...register('sort_order', { 
-                      required: 'Sort order is required',
-                      min: { value: 1, message: 'Sort order must be at least 1' }
-                    })}
-                  />
-                  {errors.sort_order && (
-                    <p className="text-sm text-destructive">{errors.sort_order.message}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Lower numbers appear first. Blocks will be automatically reordered if needed.
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="sort-order">Sort Order</Label>
+                    <Input
+                      id="sort-order"
+                      type="number"
+                      min="1"
+                      {...register('sort_order', { 
+                        required: 'Sort order is required',
+                        min: { value: 1, message: 'Sort order must be at least 1' }
+                      })}
+                    />
+                    {errors.sort_order && (
+                      <p className="text-sm text-destructive">{errors.sort_order.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Lower numbers appear first. Blocks will be automatically reordered if needed.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
