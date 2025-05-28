@@ -293,8 +293,8 @@ export function ContentBlockForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {editingBlock ? 'Edit Content Block' : 'Add Content Block'}
           </DialogTitle>
@@ -306,82 +306,84 @@ export function ContentBlockForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Block Configuration</CardTitle>
-              <CardDescription>
-                Configure the basic settings for this content block.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="block-type">Block Type</Label>
-                <Select
-                  value={watchedBlockType}
-                  onValueChange={(value) => {
-                    setValue('block_type', value);
-                    setValue('content_data', {}); // Reset content data when type changes
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a block type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {blockTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {formatBlockTypeName(type)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.block_type && (
-                  <p className="text-sm text-destructive">{errors.block_type.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sort-order">Sort Order</Label>
-                <Input
-                  id="sort-order"
-                  type="number"
-                  min="1"
-                  {...register('sort_order', { 
-                    required: 'Sort order is required',
-                    min: { value: 1, message: 'Sort order must be at least 1' }
-                  })}
-                />
-                {errors.sort_order && (
-                  <p className="text-sm text-destructive">{errors.sort_order.message}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Lower numbers appear first. Blocks will be automatically reordered if needed.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {selectedBlockType && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Content</CardTitle>
+                <CardTitle className="text-lg">Block Configuration</CardTitle>
                 <CardDescription>
-                  Configure the content for this {formatBlockTypeName(selectedBlockType).toLowerCase()} block.
+                  Configure the basic settings for this content block.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {renderContentFields()}
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="block-type">Block Type</Label>
+                  <Select
+                    value={watchedBlockType}
+                    onValueChange={(value) => {
+                      setValue('block_type', value);
+                      setValue('content_data', {}); // Reset content data when type changes
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a block type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {blockTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {formatBlockTypeName(type)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.block_type && (
+                    <p className="text-sm text-destructive">{errors.block_type.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sort-order">Sort Order</Label>
+                  <Input
+                    id="sort-order"
+                    type="number"
+                    min="1"
+                    {...register('sort_order', { 
+                      required: 'Sort order is required',
+                      min: { value: 1, message: 'Sort order must be at least 1' }
+                    })}
+                  />
+                  {errors.sort_order && (
+                    <p className="text-sm text-destructive">{errors.sort_order.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Lower numbers appear first. Blocks will be automatically reordered if needed.
+                  </p>
+                </div>
               </CardContent>
             </Card>
-          )}
 
-          <div className="flex justify-end space-x-2 pt-4">
+            {selectedBlockType && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Content</CardTitle>
+                  <CardDescription>
+                    Configure the content for this {formatBlockTypeName(selectedBlockType).toLowerCase()} block.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {renderContentFields()}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t border-border flex-shrink-0">
             <Button type="button" variant="outline" onClick={onClose}>
               <X className="h-4 w-4 mr-2" />
               Cancel

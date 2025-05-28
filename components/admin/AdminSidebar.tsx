@@ -37,7 +37,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="w-64 bg-background border-r border-border h-full">
+    <div className="w-64 bg-background border-r border-border flex-shrink-0">
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-8">
           <Shield className="h-8 w-8 text-primary" />
