@@ -61,13 +61,16 @@ export async function updateSession(request: NextRequest) {
   });
 
   try {
-    // This will refresh session if expired - required for Server Components
+    // Get session to check authentication status - this is more reliable for logout detection
     // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
-      console.error('Error getting user in middleware:', error);
+      console.error('Error getting session in middleware:', error);
     }
+
+    // Use session.user for basic authentication checks (less critical)
+    const user = session?.user;
 
     // Check if user is accessing a protected route
     const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
@@ -75,24 +78,39 @@ export async function updateSession(request: NextRequest) {
     
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
-    // If no user and trying to access protected route, redirect to login
-    if (!user && (isProtectedRoute || isAdminRoute)) {
+    // If no session and trying to access protected route, redirect to login
+    if (!session && (isProtectedRoute || isAdminRoute)) {
       const redirectUrl = new URL('/login', request.url);
       
       // Add the current path as a query parameter for potential redirect after login
       redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
       
-      console.log(`Redirecting unauthenticated user from ${request.nextUrl.pathname} to login`);
+      console.log(`Redirecting unauthenticated user from ${request.nextUrl.pathname} to login (session: ${session ? 'exists' : 'null'})`);
       return NextResponse.redirect(redirectUrl);
     }
 
-    // If user is accessing admin route, check for admin role
-    if (user && isAdminRoute) {
+    // If session exists and user is accessing admin route, perform secure verification
+    if (session && isAdminRoute) {
       try {
+        // SECURITY: Use getUser() for server-verified user object before role checks
+        // This ensures the session is valid and hasn't been tampered with
+        const { data: { user: verifiedUser }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !verifiedUser) {
+          console.error('Auth verification failed for admin route:', authError);
+          // Session exists in cookie but couldn't be verified by server
+          // This could indicate a tampered/expired session - redirect to login
+          const redirectUrl = new URL('/login', request.url);
+          redirectUrl.searchParams.set('error', 'auth_verification_failed');
+          redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
+          return NextResponse.redirect(redirectUrl);
+        }
+
+        // Now use the server-verified user ID for profile lookup
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', verifiedUser.id) // Use server-verified user ID
           .single();
 
         if (profileError) {
@@ -102,12 +120,12 @@ export async function updateSession(request: NextRequest) {
         }
 
         if (profile?.role !== 'admin') {
-          console.log(`Non-admin user ${user.id} attempted to access admin route: ${request.nextUrl.pathname}`);
+          console.log(`Non-admin user ${verifiedUser.id} attempted to access admin route: ${request.nextUrl.pathname}`);
           // Redirect non-admin users to dashboard
           return NextResponse.redirect(new URL('/dashboard', request.url));
         }
 
-        console.log(`Admin user ${user.id} accessing admin route: ${request.nextUrl.pathname}`);
+        console.log(`Admin user ${verifiedUser.id} accessing admin route: ${request.nextUrl.pathname}`);
       } catch (err) {
         console.error('Error checking admin role:', err);
         // On error, redirect to dashboard for safety

@@ -72,6 +72,33 @@ public.profiles
 ├── role (TEXT, DEFAULT 'user')
 ├── created_at (TIMESTAMPTZ)
 └── updated_at (TIMESTAMPTZ)
+
+public.content_pages
+├── id (UUID, PK)
+├── slug (TEXT, UNIQUE)
+├── title (TEXT)
+├── meta_description (TEXT, nullable)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.content_blocks
+├── id (UUID, PK)
+├── page_id (UUID, FK → content_pages.id, nullable)
+├── tool_slug (TEXT, nullable)
+├── block_type (content_block_type_enum)
+├── content_data (JSONB)
+├── sort_order (INTEGER)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+content_block_type_enum
+├── heading_h1, heading_h2, heading_h3, etc.
+├── paragraph, blockquote
+├── unordered_list, ordered_list
+├── image, video
+├── faq_item, call_to_action_button
+├── ad_slot_manual, ad_slot_auto
+└── ... (25+ total types)
 ```
 
 ## Security Model
@@ -90,6 +117,71 @@ public.profiles
 4. Existing users (if any) will need profiles created manually
 5. Admin roles must be assigned manually through SQL or admin functions
 
+### 4. `005_create_content_pages_table.sql`
+**Purpose**: Creates the `public.content_pages` table for storing metadata about static pages.
+
+**What it does**:
+- Creates the content_pages table for editable static pages
+- Includes slug, title, and meta_description fields
+- Sets up indexes and constraints for data integrity
+- Adds automatic updated_at timestamp handling
+- Inserts default pages (about-us, privacy-policy, terms-of-service, contact)
+
+**Key Features**:
+- URL-friendly slug validation
+- SEO meta description support
+- Automatic timestamp management
+- Default page creation
+
+### 5. `006_create_content_block_types_enum.sql`
+**Purpose**: Creates an ENUM type for content block types to ensure type safety.
+
+**What it does**:
+- Defines `content_block_type_enum` with comprehensive block types
+- Includes headings, paragraphs, lists, images, forms, ads, and more
+- Provides helper functions for managing enum values
+- Supports future extensibility
+
+**Block Types Include**:
+- Text content (headings, paragraphs, lists)
+- Media (images, videos)
+- Interactive (forms, buttons, FAQs)
+- Layout (columns, dividers, spacers)
+- Special (ads, embeds, tool widgets)
+
+### 6. `007_create_content_blocks_table.sql`
+**Purpose**: Creates the main `public.content_blocks` table for structured content.
+
+**What it does**:
+- Creates content_blocks table with JSONB for flexible content storage
+- Supports association with both static pages and tool pages
+- Implements sort ordering for block arrangement
+- Includes comprehensive indexing for performance
+- Provides helper functions for retrieving blocks
+
+**Key Features**:
+- JSONB content_data for flexible block-specific data
+- Foreign key to content_pages OR tool_slug (mutually exclusive)
+- Sort ordering for page layout control
+- Helper functions for easy content retrieval
+- Example content blocks for default pages
+
+### 7. `008_rls_content_tables.sql`
+**Purpose**: Enables RLS and defines security policies for content tables.
+
+**What it does**:
+- Enables Row Level Security on content tables
+- Creates policies for public read access
+- Restricts write operations to admin users only
+- Provides helper functions for role checking
+- Includes testing functions for policy validation
+
+**Security Model**:
+- Public users can read all content
+- Only admin users can create, update, or delete content
+- Role-based access control via profiles table
+- Comprehensive policy coverage for all operations
+
 ## Next Steps
 
 After executing these SQL commands:
@@ -101,6 +193,10 @@ After executing these SQL commands:
 6. Add profile update functionality
 7. Consider additional profile fields as needed
 8. Implement admin functions for user management
+9. **NEW**: Execute content management SQL files (005-008) for CMS functionality
+10. **NEW**: Implement admin content management interface
+11. **NEW**: Create dynamic page rendering for static pages
+12. **NEW**: Build content block components for rich content display
 
 ## Edge Function Integration
 

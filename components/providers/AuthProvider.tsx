@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Next.js router for redirection
   const router = useRouter();
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const supabase = createClient();
 
   // Function to fetch user profile
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -68,107 +69,134 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Unexpected error fetching user profile:', err);
       setProfile(null);
     }
-  };
+  }, [supabase]);
 
-  // Logout function
+  // Simplified logout function - let onAuthStateChange handle state updates
   const logout = async () => {
     try {
-      setIsLoading(true);
+      console.log('Starting logout process...');
       
-      // Sign out from Supabase
+      // Sign out from Supabase - this will trigger onAuthStateChange with SIGNED_OUT
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Error during logout:', error);
-        // Even if there's an error, we should still clear local state
-        // and redirect, as the user intent is to log out
+        // If signOut fails, manually trigger state clearing as fallback
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setIsLoading(false);
       }
 
-      // Clear local state (this will also happen via onAuthStateChange)
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-
-      // Redirect to home page
+      // Navigate away from protected routes
       router.push('/');
       
-      // Refresh to ensure server components update
-      router.refresh();
+      // Refresh to ensure server-side state consistency
+      // Use a longer delay to ensure navigation completes
+      setTimeout(() => {
+        router.refresh();
+      }, 200);
 
     } catch (err) {
       console.error('Unexpected error during logout:', err);
       
-      // Even on error, clear state and redirect
+      // On error, manually clear state as fallback
       setUser(null);
       setSession(null);
       setProfile(null);
-      router.push('/');
-      router.refresh();
-    } finally {
       setIsLoading(false);
+      router.push('/');
+      setTimeout(() => {
+        router.refresh();
+      }, 200);
     }
   };
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+    let mounted = true;
+
+    // Listen for auth state changes - this is the primary state driver
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
         
-        if (error) {
-          console.error('Error getting initial session:', error);
-        } else {
+        // Handle specific auth events
+        if (event === 'INITIAL_SESSION') {
+          console.log('Initial session loaded:', session?.user?.id);
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Fetch user profile if session exists
           if (session?.user) {
-            fetchUserProfile(session.user.id);
+            await fetchUserProfile(session.user.id);
           } else {
             setProfile(null);
           }
-        }
-      } catch (err) {
-        console.error('Unexpected error getting initial session:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-
-        // Fetch user profile if session exists
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-
-        // Handle specific auth events
-        if (event === 'SIGNED_IN') {
+          
+          setInitialCheckDone(true);
+          setIsLoading(false);
+          
+        } else if (event === 'SIGNED_IN') {
           console.log('User signed in:', session?.user?.id);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+          }
+          setIsLoading(false);
+          
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
+          console.log('User signed out - clearing all state');
+          // Clear all user-related state on sign out
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setIsLoading(false);
+          
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed for user:', session?.user?.id);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+          }
+          setIsLoading(false);
+          
+        } else {
+          // Handle any other events
+          console.log('Other auth event:', event);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+          setIsLoading(false);
         }
       }
     );
 
-    // Cleanup subscription on unmount
+    // Fallback: If initial session event doesn't fire within reasonable time
+    const fallbackTimer = setTimeout(() => {
+      if (!initialCheckDone && mounted) {
+        console.log('Fallback: Initial session check timeout, setting loading to false');
+        setIsLoading(false);
+        setInitialCheckDone(true);
+      }
+    }, 3000);
+
+    // Cleanup
     return () => {
+      mounted = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, [supabase.auth, fetchUserProfile, initialCheckDone]);
 
   const value: AuthContextType = {
     user,
