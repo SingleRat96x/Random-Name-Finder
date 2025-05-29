@@ -12,7 +12,7 @@ export default async function AboutPage() {
   const { blocks } = await getPageWithBlocks(PAGE_SLUG);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <article className="space-y-6">
         {blocks.map((block) => (
           <ContentBlockRenderer key={block.id} block={block} />

@@ -36,4 +36,77 @@ export async function fetchAllPublishedToolsMetadata(): Promise<PublishedToolMet
     console.error('Unexpected error in fetchAllPublishedToolsMetadata:', error);
     throw new Error('Failed to fetch published tools');
   }
+}
+
+/**
+ * Fetch other published tools for "You Might Like" section
+ * Prioritizes tools from the same category, falls back to random selection
+ */
+export async function fetchOtherPublishedTools(params: {
+  currentToolSlug: string;
+  count: number;
+  category?: string | null;
+}): Promise<PublishedToolMetadata[]> {
+  try {
+    const supabase = await createServerComponentClient();
+    const { currentToolSlug, count, category } = params;
+    
+    let selectedTools: PublishedToolMetadata[] = [];
+    
+    // Strategy 1: Try to get tools from the same category first
+    if (category) {
+      const { data: categoryTools, error: categoryError } = await supabase
+        .from('tools')
+        .select('id, name, slug, description, category, accent_color_class, icon_name')
+        .eq('is_published', true)
+        .eq('category', category)
+        .neq('slug', currentToolSlug)
+        .limit(count);
+        
+      if (!categoryError && categoryTools) {
+        selectedTools = categoryTools;
+      }
+    }
+    
+    // Strategy 2: If we don't have enough tools from the category, get more tools
+    if (selectedTools.length < count) {
+      const remainingCount = count - selectedTools.length;
+      
+      // Get tools not in the same category (or if no category was specified)
+      let query = supabase
+        .from('tools')
+        .select('id, name, slug, description, category, accent_color_class, icon_name')
+        .eq('is_published', true)
+        .neq('slug', currentToolSlug);
+        
+      // Exclude tools we already selected from the same category
+      if (selectedTools.length > 0) {
+        const selectedSlugs = selectedTools.map(tool => tool.slug);
+        query = query.not('slug', 'in', `(${selectedSlugs.join(',')})`);
+      }
+      
+      // For "randomness", we'll order by created_at desc and limit
+      // This gives us recently added tools which provides some variety
+      const { data: additionalTools, error: additionalError } = await query
+        .order('created_at', { ascending: false })
+        .limit(remainingCount);
+        
+      if (!additionalError && additionalTools) {
+        selectedTools = [...selectedTools, ...additionalTools];
+      }
+    }
+    
+    // Shuffle the results for more variety (simple array shuffle)
+    for (let i = selectedTools.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [selectedTools[i], selectedTools[j]] = [selectedTools[j], selectedTools[i]];
+    }
+    
+    // Return exactly the requested count
+    return selectedTools.slice(0, count);
+    
+  } catch (error) {
+    console.error('Unexpected error in fetchOtherPublishedTools:', error);
+    return []; // Return empty array on error to not break the page
+  }
 } 

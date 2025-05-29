@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { fetchToolBySlug, fetchToolContentBlocks, fetchAvailableAIModels } from '@/lib/supabase/server';
+import { fetchOtherPublishedTools } from '@/app/tools/actions';
 import { ContentBlockRenderer } from '@/components/content/ContentBlockRenderer';
+import { SmallToolCard } from '@/components/tools/SmallToolCard';
 import { ToolPageClient } from './ToolPageClient';
 
 interface ToolPageProps {
@@ -36,22 +38,31 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
 export default async function ToolPage({ params }: ToolPageProps) {
   const { toolSlug } = await params;
   
-  // Fetch tool data and content blocks
-  const [tool, contentBlocks] = await Promise.all([
+  // Fetch tool data, content blocks, and other tools
+  const [tool, contentBlocks, availableAIModels, otherTools] = await Promise.all([
     fetchToolBySlug(toolSlug),
-    fetchToolContentBlocks(toolSlug)
+    fetchToolContentBlocks(toolSlug),
+    fetchToolBySlug(toolSlug).then(async (tool) => {
+      if (!tool) return [];
+      return fetchAvailableAIModels(tool.available_ai_model_identifiers || []);
+    }),
+    fetchToolBySlug(toolSlug).then(async (tool) => {
+      if (!tool) return [];
+      return fetchOtherPublishedTools({
+        currentToolSlug: toolSlug,
+        count: 4,
+        category: tool.category
+      });
+    })
   ]);
 
   if (!tool) {
     notFound();
   }
 
-  // Fetch available AI models for this tool
-  const availableAIModels = await fetchAvailableAIModels(tool.available_ai_model_identifiers || []);
-
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Tool Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-4">
@@ -91,6 +102,20 @@ export default async function ToolPage({ params }: ToolPageProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Other Tools You Might Like */}
+        {otherTools && otherTools.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-foreground">
+              Other Tools You Might Like
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {otherTools.map(tool => (
+                <SmallToolCard key={tool.id} tool={tool} />
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

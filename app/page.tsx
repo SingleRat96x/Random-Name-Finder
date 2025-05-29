@@ -1,7 +1,7 @@
 export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center p-24 text-center">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-4xl md:text-6xl font-bold text-foreground">
           Welcome to{' '}
           <span className="text-primary">Random Name Finder</span>
