@@ -97,7 +97,7 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] h-[95vh] max-w-none sm:w-[80vw] sm:h-[90vh] sm:max-w-[80vw] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Code className="h-5 w-5" />

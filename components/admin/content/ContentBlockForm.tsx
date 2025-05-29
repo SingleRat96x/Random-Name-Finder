@@ -326,7 +326,7 @@ export function ContentBlockForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[95vw] h-[95vh] max-w-none sm:w-[80vw] sm:h-[90vh] sm:max-w-[80vw] sm:max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {editingBlock ? 'Edit Content Block' : 'Add Content Block'}
