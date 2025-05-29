@@ -154,21 +154,21 @@ export function NameResultsDisplay({ names, isLoading, error, toolName }: NameRe
                       {name}
                     </span>
                     
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 hover:scale-110 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleFavorite(name);
                         }}
                       >
                         <Heart 
-                          className={`h-3 w-3 ${
+                          className={`h-3 w-3 transition-colors ${
                             favoriteNames.has(name) 
                               ? 'fill-red-500 text-red-500' 
-                              : 'text-muted-foreground'
+                              : 'text-muted-foreground hover:text-red-400'
                           }`} 
                         />
                       </Button>
@@ -176,7 +176,7 @@ export function NameResultsDisplay({ names, isLoading, error, toolName }: NameRe
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 hover:scale-110 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           copyToClipboard(name);
@@ -185,7 +185,7 @@ export function NameResultsDisplay({ names, isLoading, error, toolName }: NameRe
                         {copiedNames.has(name) ? (
                           <Check className="h-3 w-3 text-green-500" />
                         ) : (
-                          <Copy className="h-3 w-3 text-muted-foreground" />
+                          <Copy className="h-3 w-3 text-muted-foreground hover:text-primary transition-colors" />
                         )}
                       </Button>
                     </div>

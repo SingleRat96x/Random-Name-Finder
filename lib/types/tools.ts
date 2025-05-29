@@ -42,6 +42,8 @@ export interface ConfigurableField {
   max?: number;
   placeholder?: string;
   required?: boolean;
+  description?: string;
+  layout_span_all_columns?: boolean;
 }
 
 export interface ContentBlock {

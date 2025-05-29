@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Eye, EyeOff, FileText } from 'lucide-react';
+import { Plus, Edit, Eye, EyeOff, FileText, ExternalLink } from 'lucide-react';
 import { fetchTools } from './actions';
 import { DeleteToolButton } from '@/components/admin/tools/DeleteToolButton';
 
@@ -105,6 +105,11 @@ export default async function AdminToolsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
+                        <Button asChild size="sm" variant="outline" title="Open Public Page">
+                          <Link href={`/tools/${tool.slug}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
                         <Button asChild size="sm" variant="outline">
                           <Link href={`/admin/tools/${tool.id}/edit`}>
                             <Edit className="h-4 w-4" />

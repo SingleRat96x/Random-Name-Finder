@@ -110,12 +110,16 @@ export function ToolInputForm({
   const renderField = (field: ConfigurableField) => {
     const value = formValues[field.name];
     
+    // Determine if field should span all columns
+    const shouldSpanAllColumns = field.layout_span_all_columns || field.type === 'textarea';
+    const fieldWrapperClass = shouldSpanAllColumns ? 'md:col-span-2' : '';
+    
     // Special handling for name_length_preference field
     if (field.name === 'name_length_preference' && field.type === 'select') {
       const lengthOptions = field.options || ['Any', 'Short', 'Medium', 'Long'];
       return (
-        <div key={field.name} className="space-y-2">
-          <Label htmlFor={field.name}>{field.label}</Label>
+        <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+          <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
           <Select
             value={String(value || '')}
             onValueChange={(newValue) => handleInputChange(field.name, newValue)}
@@ -135,6 +139,9 @@ export function ToolInputForm({
               ))}
             </SelectContent>
           </Select>
+          {field.description && (
+            <p className="text-xs text-muted-foreground">{field.description}</p>
+          )}
         </div>
       );
     }
@@ -142,8 +149,8 @@ export function ToolInputForm({
     // Special handling for keyword field
     if (field.name === 'keyword' && field.type === 'text') {
       return (
-        <div key={field.name} className="space-y-2">
-          <Label htmlFor={field.name}>{field.label}</Label>
+        <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+          <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
           <Input
             id={field.name}
             type="text"
@@ -162,8 +169,8 @@ export function ToolInputForm({
     switch (field.type) {
       case 'text':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
             <Input
               id={field.name}
               type="text"
@@ -172,13 +179,16 @@ export function ToolInputForm({
               placeholder={field.placeholder}
               required={field.required}
             />
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
           </div>
         );
         
       case 'number':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
             <Input
               id={field.name}
               type="number"
@@ -186,15 +196,19 @@ export function ToolInputForm({
               onChange={(e) => handleInputChange(field.name, parseInt(e.target.value, 10) || 0)}
               min={field.min}
               max={field.max}
+              placeholder={field.placeholder}
               required={field.required}
             />
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
           </div>
         );
         
       case 'select':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
             <Select
               value={String(value || '')}
               onValueChange={(newValue) => handleInputChange(field.name, newValue)}
@@ -210,13 +224,16 @@ export function ToolInputForm({
                 ))}
               </SelectContent>
             </Select>
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
           </div>
         );
         
       case 'textarea':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
             <Textarea
               id={field.name}
               value={String(value || '')}
@@ -224,19 +241,28 @@ export function ToolInputForm({
               placeholder={field.placeholder}
               required={field.required}
               rows={3}
+              className="min-h-[80px]"
             />
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
           </div>
         );
         
       case 'switch':
         return (
-          <div key={field.name} className="flex items-center space-x-2">
-            <Switch
-              id={field.name}
-              checked={Boolean(value)}
-              onCheckedChange={(checked) => handleInputChange(field.name, checked)}
-            />
-            <Label htmlFor={field.name}>{field.label}</Label>
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <div className="flex items-center space-x-3">
+              <Switch
+                id={field.name}
+                checked={Boolean(value)}
+                onCheckedChange={(checked) => handleInputChange(field.name, checked)}
+              />
+              <Label htmlFor={field.name} className="text-sm font-medium cursor-pointer">{field.label}</Label>
+            </div>
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
           </div>
         );
         
@@ -277,30 +303,43 @@ export function ToolInputForm({
                 onValueChange={setSelectedAIModel}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={`Default (${defaultModelDisplayName})`} />
+                  <SelectValue placeholder={`Default (${defaultModelDisplayName})`}>
+                    {selectedAIModel === 'default' ? (
+                      `Default (${defaultModelDisplayName})`
+                    ) : (
+                      (() => {
+                        const selectedModel = available_ai_models.find(m => m.model_identifier === selectedAIModel);
+                        return selectedModel ? `${selectedModel.display_name} (${selectedModel.provider_name})` : '';
+                      })()
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between w-full">
                       <span>Default ({defaultModelDisplayName})</span>
                     </div>
                   </SelectItem>
                   {available_ai_models.map((model) => (
                     <SelectItem key={model.model_identifier} value={model.model_identifier}>
-                      <div className="flex flex-col space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span>{model.display_name}</span>
-                          <span className="text-xs text-muted-foreground">({model.provider_name})</span>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col">
+                          <span>{model.display_name} <span className="text-xs text-muted-foreground">({model.provider_name})</span></span>
+                          {model.capabilities_tags.length > 0 && (
+                            <div className="flex space-x-1 mt-1">
+                              {model.capabilities_tags.slice(0, 3).map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {model.capabilities_tags.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{model.capabilities_tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {model.capabilities_tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {model.capabilities_tags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </SelectItem>
                   ))}
@@ -313,7 +352,7 @@ export function ToolInputForm({
           )}
           
           {/* Dynamic Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
             {configurable_fields.map(renderField)}
           </div>
           

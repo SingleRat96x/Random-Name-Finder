@@ -73,20 +73,15 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
       const errorText = await response.text();
       console.error('OpenRouter API error:', response.status, errorText);
       
-      // Handle 429 rate limit errors specifically
       if (response.status === 429) {
-        // Try to get the model name for a better error message
         let modelName = modelToUse;
         try {
-          // Extract model name from identifier if possible
           modelName = modelToUse.split('/').pop() || modelToUse;
-        } catch {
-          // Use the identifier as-is if parsing fails
-        }
-        
+        } catch {}
+
         return { 
           success: false, 
-          error: `The selected AI model (${modelName}) is currently experiencing high traffic or is rate-limited. Please try again in a few moments, or select a different AI model if available.`
+          error: `The selected AI model (${modelName}) is currently experiencing high traffic or is rate-limited. Please try again in a few moments, or select a different AI model if available.` 
         };
       }
       
@@ -98,7 +93,6 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
     
     const data = await response.json();
     
-    // Extract names from the response
     const generatedText = data.choices?.[0]?.message?.content;
     if (!generatedText) {
       return { 
@@ -107,7 +101,6 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
       };
     }
     
-    // Parse names from the response (assuming they're in a list format)
     const names = parseNamesFromResponse(generatedText);
     
     if (names.length === 0) {
@@ -133,57 +126,39 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
  */
 function constructPrompt(category: string, parameters: Record<string, unknown>): string {
   const { tone, count, keyword, nameLengthPreference } = parameters;
-  
-  let basePrompt = '';
-  
-  switch (category.toLowerCase()) {
-    case 'cat names':
-      basePrompt = `Generate ${count} creative and unique cat names`;
-      if (tone) {
-        basePrompt += ` with a ${tone} tone`;
-      }
-      break;
-    case 'dog names':
-      basePrompt = `Generate ${count} creative and unique dog names`;
-      if (tone) {
-        basePrompt += ` with a ${tone} tone`;
-      }
-      break;
-    case 'business names':
-      basePrompt = `Generate ${count} creative and unique business names`;
-      if (tone) {
-        basePrompt += ` with a ${tone} tone`;
-      }
-      break;
-    default:
-      basePrompt = `Generate ${count} creative and unique names for ${category}`;
-      if (tone) {
-        basePrompt += ` with a ${tone} tone`;
-      }
+
+  let basePrompt = `You are an expert name creator. Follow the rules exactly.`;
+
+  basePrompt += `\n\nTask: Generate exactly ${count} creative and unique names for the category: "${category}".`;
+
+  if (tone) {
+    basePrompt += ` The tone of the names must be "${tone}".`;
   }
-  
-  // Add keyword requirement if provided
+
   if (keyword && typeof keyword === 'string' && keyword.trim()) {
-    basePrompt += `. Include the word "${keyword.trim()}" in some of the names`;
+    basePrompt += ` Each name must include the keyword "${keyword.trim()}" exactly as it is.`;
   }
-  
-  // Add length preference if provided
+
   if (nameLengthPreference && typeof nameLengthPreference === 'string' && nameLengthPreference !== 'any') {
     switch (nameLengthPreference.toLowerCase()) {
       case 'short':
-        basePrompt += '. Generate names that are generally short (around 5-8 characters)';
+        basePrompt += ` Each name must be short, typically 5 to 8 characters.`;
         break;
       case 'medium':
-        basePrompt += '. Generate names that are generally medium length (around 8-12 characters)';
+        basePrompt += ` Each name must be medium in length, typically 8 to 12 characters.`;
         break;
       case 'long':
-        basePrompt += '. Generate names that are generally long (12+ characters)';
+        basePrompt += ` Each name must be long, typically 12 or more characters.`;
         break;
     }
   }
-  
-  basePrompt += `. Please provide only the names, one per line, without numbers, bullets, or additional text. Each name should be on its own line.`;
-  
+
+  basePrompt += `\n\nStrict Output Rules:\n`;
+  basePrompt += `- Return ONLY the list of names.\n`;
+  basePrompt += `- Do NOT include any explanation, greeting, or formatting like bullets, numbers, or quotes.\n`;
+  basePrompt += `- Put each name on its own line.\n`;
+  basePrompt += `- Do not include any blank lines.\n`;
+
   return basePrompt;
 }
 
@@ -191,16 +166,10 @@ function constructPrompt(category: string, parameters: Record<string, unknown>):
  * Parse names from AI response text
  */
 function parseNamesFromResponse(responseText: string): string[] {
-  // Split by lines and clean up
-  const lines = responseText
+  return responseText
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0)
-    .map(line => {
-      // Remove common prefixes like numbers, bullets, dashes
-      return line.replace(/^[\d\-\*\•\.\)\]\}\s]+/, '').trim();
-    })
-    .filter(line => line.length > 0 && line.length < 100); // Filter out very long lines
-  
-  return lines;
-} 
+    .map(line => line.replace(/^[\d\-\*\•\.\)\]\}\s]+/, '').trim())
+    .filter(line => line.length > 0 && line.length < 100);
+}
