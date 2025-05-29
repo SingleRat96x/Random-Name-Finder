@@ -53,70 +53,6 @@ Execute these SQL files in the following order in your Supabase SQL editor:
 
 **Note**: This replaces the previous trigger-based approach with a more reliable Auth Hook + Edge Function pattern.
 
-## Database Schema Overview
-
-```
-auth.users (Supabase managed)
-├── id (UUID, PK)
-├── email
-├── raw_user_meta_data
-└── ... (other Supabase fields)
-
-public.profiles
-├── id (UUID, PK)
-├── user_id (UUID, FK → auth.users.id)
-├── username (TEXT, UNIQUE)
-├── full_name (TEXT, nullable)
-├── avatar_url (TEXT, nullable)
-├── website (TEXT, nullable)
-├── role (TEXT, DEFAULT 'user')
-├── created_at (TIMESTAMPTZ)
-└── updated_at (TIMESTAMPTZ)
-
-public.content_pages
-├── id (UUID, PK)
-├── slug (TEXT, UNIQUE)
-├── title (TEXT)
-├── meta_description (TEXT, nullable)
-├── created_at (TIMESTAMPTZ)
-└── updated_at (TIMESTAMPTZ)
-
-public.content_blocks
-├── id (UUID, PK)
-├── page_id (UUID, FK → content_pages.id, nullable)
-├── tool_slug (TEXT, nullable)
-├── block_type (content_block_type_enum)
-├── content_data (JSONB)
-├── sort_order (INTEGER)
-├── created_at (TIMESTAMPTZ)
-└── updated_at (TIMESTAMPTZ)
-
-content_block_type_enum
-├── heading_h1, heading_h2, heading_h3, etc.
-├── paragraph, blockquote
-├── unordered_list, ordered_list
-├── image, video
-├── faq_item, call_to_action_button
-├── ad_slot_manual, ad_slot_auto
-└── ... (25+ total types)
-```
-
-## Security Model
-
-- **Row Level Security**: Enabled on profiles table
-- **User Isolation**: Users can only access their own profile data
-- **Role-Based Access**: Simple user/admin role system
-- **Automatic Profile Creation**: Every auth user gets a profile
-- **Data Consistency**: Foreign key constraints and triggers maintain integrity
-
-## Usage Notes
-
-1. Execute these files in order in your Supabase SQL editor
-2. All commands are idempotent and safe to re-run
-3. The trigger will automatically create profiles for new users
-4. Existing users (if any) will need profiles created manually
-5. Admin roles must be assigned manually through SQL or admin functions
-
 ### 4. `005_create_content_pages_table.sql`
 **Purpose**: Creates the `public.content_pages` table for storing metadata about static pages.
 
@@ -182,6 +118,185 @@ content_block_type_enum
 - Role-based access control via profiles table
 - Comprehensive policy coverage for all operations
 
+### 8. `009_create_tools_table.sql`
+**Purpose**: Creates the `public.tools` table for storing name generation tool configurations.
+
+### 9. `010_rls_tools_table.sql`
+**Purpose**: Enables RLS and defines security policies for the tools table.
+
+### 10. `011_insert_sample_cat_name_tool.sql`
+**Purpose**: Inserts a sample cat name generator tool for testing.
+
+### 11. `012_create_ai_models_table.sql`
+**Purpose**: Creates the `public.ai_models` table for managing AI model configurations.
+
+### 12. `013_rls_ai_models_table.sql`
+**Purpose**: Enables RLS and defines security policies for the AI models table.
+
+### 13. `014_alter_tools_table_for_ai_models.sql`
+**Purpose**: Updates the tools table to support AI model associations.
+
+### 14. `014_create_user_saved_names_table.sql`
+**Purpose**: Creates the `public.user_saved_names` table for storing user's favorited names.
+
+**What it does**:
+- Creates the user_saved_names table for persistent favorites
+- Links saved names to users and tools via foreign keys
+- Prevents duplicate saves with unique constraints
+- Includes performance indexes for fast retrieval
+- Adds comprehensive documentation
+
+**Key Features**:
+- UUID primary key for unique identification
+- Foreign key to auth.users with cascade deletion
+- Tool slug context for organization
+- Timestamp tracking for favorites
+- Unique constraint prevents duplicate saves
+- Optimized indexes for user queries
+
+### 15. `015_rls_user_saved_names_table.sql`
+**Purpose**: Enables Row Level Security (RLS) and defines security policies for the user_saved_names table.
+
+**What it does**:
+- Enables RLS on the user_saved_names table
+- Creates policies for SELECT, INSERT, DELETE, and UPDATE operations
+- Ensures users can only access their own saved names
+
+**Security Policies**:
+- Users can view only their own saved names
+- Users can save names only for themselves
+- Users can delete only their own saved names
+- Users can update only their own saved names (if needed)
+
+### 16. `016_alter_tools_table_add_category.sql`
+**Purpose**: Adds a category field to the tools table for tool categorization and filtering.
+
+**What it does**:
+- Adds a new `category` column to the tools table (TEXT, NULLABLE)
+- Creates performance indexes for category-based filtering
+- Adds a composite index for published tools by category
+- Includes comprehensive documentation for the new column
+
+**Key Features**:
+- Optional category field for organizing tools
+- Optimized indexes for public tools listing page
+- Supports efficient filtering by category
+- Database comments for clear documentation
+
+### 17. `017_alter_tools_table_add_accent_color.sql`
+**Purpose**: Adds an accent color class field to the tools table for visual customization of tool cards.
+
+**What it does**:
+- Adds a new `accent_color_class` column to the tools table (TEXT, NULLABLE)
+- Adds column documentation explaining usage for Tailwind CSS classes
+- Enables visual customization of tool cards on the public listing page
+
+**Usage**:
+- Stores Tailwind CSS class strings (e.g., "border-t-4 border-blue-500", "text-green-600")
+- Used by the frontend to apply custom styling to tool cards
+- Completely optional field for enhanced visual presentation
+
+## Database Schema Overview
+
+```
+auth.users (Supabase managed)
+├── id (UUID, PK)
+├── email
+├── raw_user_meta_data
+└── ... (other Supabase fields)
+
+public.profiles
+├── id (UUID, PK)
+├── user_id (UUID, FK → auth.users.id)
+├── username (TEXT, UNIQUE)
+├── full_name (TEXT, nullable)
+├── avatar_url (TEXT, nullable)
+├── website (TEXT, nullable)
+├── role (TEXT, DEFAULT 'user')
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.content_pages
+├── id (UUID, PK)
+├── slug (TEXT, UNIQUE)
+├── title (TEXT)
+├── meta_description (TEXT, nullable)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.content_blocks
+├── id (UUID, PK)
+├── page_id (UUID, FK → content_pages.id, nullable)
+├── tool_slug (TEXT, nullable)
+├── block_type (content_block_type_enum)
+├── content_data (JSONB)
+├── sort_order (INTEGER)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.tools
+├── id (UUID, PK)
+├── name (TEXT)
+├── slug (TEXT, UNIQUE)
+├── description (TEXT, nullable)
+├── category (TEXT, nullable)
+├── accent_color_class (TEXT, nullable)
+├── ai_prompt_category (TEXT)
+├── default_ai_model_identifier (TEXT, nullable)
+├── available_ai_model_identifiers (TEXT[])
+├── default_parameters (JSONB)
+├── configurable_fields (JSONB)
+├── is_published (BOOLEAN)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.ai_models
+├── id (UUID, PK)
+├── model_identifier (TEXT, UNIQUE)
+├── display_name (TEXT)
+├── provider_name (TEXT)
+├── capabilities_tags (TEXT[])
+├── is_active (BOOLEAN)
+├── notes_for_admin (TEXT, nullable)
+├── created_at (TIMESTAMPTZ)
+└── updated_at (TIMESTAMPTZ)
+
+public.user_saved_names
+├── id (UUID, PK)
+├── user_id (UUID, FK → auth.users.id)
+├── name_text (TEXT)
+├── tool_slug (TEXT)
+├── favorited_at (TIMESTAMPTZ)
+└── UNIQUE(user_id, name_text, tool_slug)
+
+content_block_type_enum
+├── heading_h1, heading_h2, heading_h3, etc.
+├── paragraph, blockquote
+├── unordered_list, ordered_list
+├── image, video
+├── faq_item, call_to_action_button
+├── ad_slot_manual, ad_slot_auto
+└── ... (25+ total types)
+```
+
+## Security Model
+
+- **Row Level Security**: Enabled on profiles, content, tools, ai_models, and user_saved_names tables
+- **User Isolation**: Users can only access their own profile data and saved names
+- **Role-Based Access**: Simple user/admin role system
+- **Automatic Profile Creation**: Every auth user gets a profile
+- **Data Consistency**: Foreign key constraints and triggers maintain integrity
+- **Favorites Security**: Users can only manage their own saved names
+
+## Usage Notes
+
+1. Execute these files in order in your Supabase SQL editor
+2. All commands are idempotent and safe to re-run
+3. The trigger will automatically create profiles for new users
+4. Existing users (if any) will need profiles created manually
+5. Admin roles must be assigned manually through SQL or admin functions
+6. User saved names are automatically cleaned up when users are deleted
+
 ## Next Steps
 
 After executing these SQL commands:
@@ -193,10 +308,14 @@ After executing these SQL commands:
 6. Add profile update functionality
 7. Consider additional profile fields as needed
 8. Implement admin functions for user management
-9. **NEW**: Execute content management SQL files (005-008) for CMS functionality
-10. **NEW**: Implement admin content management interface
-11. **NEW**: Create dynamic page rendering for static pages
-12. **NEW**: Build content block components for rich content display
+9. Execute content management SQL files (005-008) for CMS functionality
+10. Implement admin content management interface
+11. Create dynamic page rendering for static pages
+12. Build content block components for rich content display
+13. **NEW**: Execute tools and AI models SQL files (009-014) for name generation functionality
+14. **NEW**: Execute user saved names SQL files (014-015) for favorites functionality
+15. **NEW**: Implement favorites UI components and server actions
+16. **NEW**: Test favorites functionality for both logged-in and guest users
 
 ## Edge Function Integration
 

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { SavedName } from '@/lib/types/tools';
 
 interface UserProfile {
   user_id: string;
@@ -18,8 +19,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  savedNames: SavedName[] | null;
   isLoading: boolean;
   logout: () => Promise<void>;
+  refreshSavedNames: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [savedNames, setSavedNames] = useState<SavedName[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
@@ -71,6 +75,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [supabase]);
 
+  // Function to fetch user's saved names
+  const fetchSavedNames = useCallback(async (userId: string) => {
+    try {
+      const { data: savedNames, error } = await supabase
+        .from('user_saved_names')
+        .select('*')
+        .eq('user_id', userId)
+        .order('favorited_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching saved names:', error);
+        setSavedNames(null);
+      } else {
+        setSavedNames(savedNames || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching saved names:', err);
+      setSavedNames(null);
+    }
+  }, [supabase]);
+
+  // Function to refresh saved names (exposed to components)
+  const refreshSavedNames = useCallback(async () => {
+    if (user?.id) {
+      await fetchSavedNames(user.id);
+    }
+  }, [user?.id, fetchSavedNames]);
+
   // Simplified logout function - let onAuthStateChange handle state updates
   const logout = async () => {
     try {
@@ -82,9 +114,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         console.error('Error during logout:', error);
         // If signOut fails, manually trigger state clearing as fallback
-      setUser(null);
-      setSession(null);
+        setUser(null);
+        setSession(null);
         setProfile(null);
+        setSavedNames(null);
         setIsLoading(false);
       }
 
@@ -94,7 +127,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Refresh to ensure server-side state consistency
       // Use a longer delay to ensure navigation completes
       setTimeout(() => {
-      router.refresh();
+        router.refresh();
       }, 200);
 
     } catch (err) {
@@ -104,10 +137,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null);
       setSession(null);
       setProfile(null);
+      setSavedNames(null);
       setIsLoading(false);
       router.push('/');
       setTimeout(() => {
-      router.refresh();
+        router.refresh();
       }, 200);
     }
   };
@@ -125,17 +159,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Handle specific auth events
         if (event === 'INITIAL_SESSION') {
           console.log('Initial session loaded:', session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
+          setSession(session);
+          setUser(session?.user ?? null);
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
+            await fetchSavedNames(session.user.id);
           } else {
             setProfile(null);
+            setSavedNames(null);
           }
           
           setInitialCheckDone(true);
-        setIsLoading(false);
+          setIsLoading(false);
 
         } else if (event === 'SIGNED_IN') {
           console.log('User signed in:', session?.user?.id);
@@ -144,6 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
+            await fetchSavedNames(session.user.id);
           }
           setIsLoading(false);
           
@@ -153,6 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
           setSession(null);
           setProfile(null);
+          setSavedNames(null);
           setIsLoading(false);
           
         } else if (event === 'TOKEN_REFRESHED') {
@@ -162,7 +200,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
-      }
+            await fetchSavedNames(session.user.id);
+          }
           setIsLoading(false);
 
         } else {
@@ -173,8 +212,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
+            await fetchSavedNames(session.user.id);
           } else {
             setProfile(null);
+            setSavedNames(null);
           }
           setIsLoading(false);
         }
@@ -196,14 +237,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [supabase.auth, fetchUserProfile, initialCheckDone]);
+  }, [supabase.auth, fetchUserProfile, fetchSavedNames, initialCheckDone]);
 
   const value: AuthContextType = {
     user,
     session,
     profile,
+    savedNames,
     isLoading,
     logout,
+    refreshSavedNames,
   };
 
   return (

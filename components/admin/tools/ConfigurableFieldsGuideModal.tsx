@@ -32,6 +32,12 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
       content: <IntroContent />
     },
     {
+      id: 'tool-category',
+      title: 'Tool Category',
+      icon: <Settings className="h-4 w-4" />,
+      content: <ToolCategoryContent />
+    },
+    {
       id: 'general',
       title: 'General Properties',
       icon: <Settings className="h-4 w-4" />,
@@ -192,6 +198,81 @@ function IntroContent() {
           </pre>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tool Card Styling (Optional)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p>
+            You can specify an <strong>Icon Name</strong> (from Lucide React) and an <strong>Accent Color Class</strong> 
+            (Tailwind CSS classes) in the main tool settings. These will be used to give each tool card on the 
+            public <code>/tools</code> listing page a unique visual touch.
+          </p>
+          <p>
+            For example, <code>accent_color_class</code> could be <code>border-t-4 border-blue-500</code> or 
+            <code>text-green-600</code> to style an icon or card element.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ToolCategoryContent() {
+  return (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Tool Category</h2>
+      <p className="text-muted-foreground">
+        The Tool Category field helps organize and group tools on the public site for better user navigation and discovery.
+      </p>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">What is Tool Category?</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p>
+            The category field is a simple text input that allows you to assign a category to your tool. 
+            This category will be used to group tools together on the public tools listing page, making it 
+            easier for users to find tools that match their interests.
+          </p>
+          <p>
+            Categories are stored in the <code>tools</code> table as a text field and can be filtered 
+            on the public site to help users discover related tools.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Usage Guidelines</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p><strong>Keep it consistent:</strong> Use standardized category names to avoid fragmenting similar tools.</p>
+          <p><strong>Examples of good categories:</strong></p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li><strong>Fantasy</strong> - For fantasy-themed names (dragons, wizards, kingdoms)</li>
+            <li><strong>Sci-Fi</strong> - For science fiction names (planets, spaceships, aliens)</li>
+            <li><strong>Pet Names</strong> - For animal and pet naming tools</li>
+            <li><strong>Business</strong> - For company, product, and brand names</li>
+            <li><strong>Character Names</strong> - For fictional character naming</li>
+            <li><strong>Places</strong> - For location and geographical names</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Implementation Notes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p>• Category field is optional - tools can exist without a category</p>
+          <p>• Categories are case-sensitive, so "Fantasy" and "fantasy" are different</p>
+          <p>• Use title case for consistency (e.g., "Pet Names" not "pet names")</p>
+          <p>• Database includes indexes for efficient category-based filtering</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -301,6 +382,40 @@ function GeneralPropertiesContent() {
             <pre className="bg-muted p-2 rounded mt-2">
               <code>"placeholder": "Enter a theme or keyword..."</code>
             </pre>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Badge variant="outline" className="mr-2">Optional</Badge>
+              layout_span_all_columns
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p><strong>Type:</strong> boolean</p>
+            <p><strong>Default:</strong> false</p>
+            <p><strong>Description:</strong> Controls field layout in the form's responsive two-column grid.</p>
+            <div className="space-y-3 mt-3">
+              <p>
+                The tool input form uses a responsive two-column grid on wider screens. By default, each field occupies one column. 
+                To make a field span both columns (e.g., for a textarea or a field that needs more horizontal space), 
+                set this property to <code>true</code>.
+              </p>
+              <p><strong>Example:</strong></p>
+              <pre className="bg-muted p-3 rounded-md overflow-x-auto">
+                <code>{`{
+  "name": "long_description_field",
+  "label": "Detailed Description",
+  "type": "textarea",
+  "layout_span_all_columns": true
+}`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground">
+                Setting <code>"layout_span_all_columns": true</code> will make the field take up the full width available 
+                in the form's grid on medium screens and up. On smaller screens, all fields stack into a single column automatically.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

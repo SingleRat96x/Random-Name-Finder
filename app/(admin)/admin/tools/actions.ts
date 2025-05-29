@@ -9,6 +9,8 @@ export interface Tool {
   name: string;
   slug: string;
   description: string | null;
+  category?: string;
+  accent_color_class?: string;
   icon_name: string | null;
   ai_prompt_category: string;
   default_ai_model_identifier: string | null;
@@ -102,6 +104,8 @@ export async function addTool(formData: FormData) {
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string;
+  const category = formData.get('category') as string;
+  const accentColorClass = formData.get('accent_color_class') as string;
   const iconName = formData.get('icon_name') as string;
   const aiPromptCategory = formData.get('ai_prompt_category') as string;
   const defaultAiModelIdentifier = formData.get('default_ai_model_identifier') as string;
@@ -127,6 +131,8 @@ export async function addTool(formData: FormData) {
       name,
       slug,
       description: description || null,
+      category: category || null,
+      accent_color_class: accentColorClass || null,
       icon_name: iconName || null,
       ai_prompt_category: aiPromptCategory,
       default_ai_model_identifier: defaultAiModelIdentifier || null,
@@ -164,6 +170,8 @@ export async function updateTool(formData: FormData) {
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string;
+  const category = formData.get('category') as string;
+  const accentColorClass = formData.get('accent_color_class') as string;
   const iconName = formData.get('icon_name') as string;
   const aiPromptCategory = formData.get('ai_prompt_category') as string;
   const defaultAiModelIdentifier = formData.get('default_ai_model_identifier') as string;
@@ -189,6 +197,8 @@ export async function updateTool(formData: FormData) {
       name,
       slug,
       description: description || null,
+      category: category || null,
+      accent_color_class: accentColorClass || null,
       icon_name: iconName || null,
       ai_prompt_category: aiPromptCategory,
       default_ai_model_identifier: defaultAiModelIdentifier || null,

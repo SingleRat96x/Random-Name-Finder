@@ -67,6 +67,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         {/* Tool Interface - Client Component */}
         <div className="mb-8">
           <ToolPageClient
+            toolSlug={toolSlug}
             toolName={tool.name}
             configurable_fields={tool.configurable_fields}
             default_parameters={tool.default_parameters}

@@ -34,6 +34,8 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
     name: initialData?.name || '',
     slug: initialData?.slug || '',
     description: initialData?.description || '',
+    category: initialData?.category || '',
+    accent_color_class: initialData?.accent_color_class || '',
     icon_name: initialData?.icon_name || '',
     ai_prompt_category: initialData?.ai_prompt_category || '',
     default_ai_model_identifier: initialData?.default_ai_model_identifier || '',
@@ -208,6 +210,32 @@ export default function ToolForm({ initialData, mode }: ToolFormProps) {
               placeholder="Brief description of what this tool generates"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Input
+              id="category"
+              value={formData.category}
+              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+              placeholder="e.g., Fantasy, Sci-Fi, Pet Names, Business"
+            />
+            <p className="text-sm text-muted-foreground">
+              Used for grouping tools on the public site. Leave empty if unsure.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="accent_color_class">Accent Color Class (Optional)</Label>
+            <Input
+              id="accent_color_class"
+              value={formData.accent_color_class}
+              onChange={(e) => setFormData(prev => ({ ...prev, accent_color_class: e.target.value }))}
+              placeholder="e.g., border-emerald-500 text-emerald-700"
+            />
+            <p className="text-sm text-muted-foreground">
+              Enter Tailwind CSS class(es) for a subtle visual accent on the tool card. Applied to a border, background, or icon.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -3,6 +3,8 @@ export interface Tool {
   name: string;
   slug: string;
   description: string | null;
+  category?: string;
+  accent_color_class?: string;
   ai_prompt_category: string;
   default_ai_model_identifier: string | null;
   available_ai_model_identifiers: string[];
@@ -66,5 +68,34 @@ export interface AIGenerationRequest {
 export interface AIGenerationResponse {
   success: boolean;
   names?: string[];
+  error?: string;
+}
+
+// ============================================================================
+// Types for user saved names functionality (Phase 2.4 & 2.5)
+// ============================================================================
+
+export interface SavedName {
+  id: string;
+  user_id: string;
+  name_text: string;
+  tool_slug: string;
+  favorited_at: string;
+}
+
+export interface SavedNamesResponse {
+  success: boolean;
+  savedNames?: SavedName[];
+  error?: string;
+}
+
+export interface SaveNameResponse {
+  success: boolean;
+  savedName?: SavedName;
+  error?: string;
+}
+
+export interface RemoveNameResponse {
+  success: boolean;
   error?: string;
 } 

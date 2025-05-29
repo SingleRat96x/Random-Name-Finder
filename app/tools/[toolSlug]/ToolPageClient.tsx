@@ -6,6 +6,7 @@ import { NameResultsDisplay } from '@/components/tools/NameResultsDisplay';
 import { ConfigurableField, AvailableAIModel } from '@/lib/types/tools';
 
 interface ToolPageClientProps {
+  toolSlug: string;
   toolName: string;
   configurable_fields: ConfigurableField[];
   default_parameters: Record<string, unknown>;
@@ -15,6 +16,7 @@ interface ToolPageClientProps {
 }
 
 export function ToolPageClient({
+  toolSlug,
   toolName,
   configurable_fields,
   default_parameters,
@@ -58,6 +60,7 @@ export function ToolPageClient({
         isLoading={isLoading}
         error={error}
         toolName={toolName}
+        toolSlug={toolSlug}
       />
     </div>
   );
