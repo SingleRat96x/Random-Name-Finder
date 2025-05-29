@@ -20,6 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment Variables
+
+This project requires certain environment variables to be set. Create a `.env.local` file in the root directory with the following variables:
+
+### Required for SEO and Sitemap
+
+```
+NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+```
+
+**Note:** Replace `https://yourdomain.com` with your actual domain. This is required for:
+- Dynamic sitemap generation (`/sitemap.xml`)
+- Proper absolute URLs in SEO meta tags
+- robots.txt sitemap reference
+
+The robots.txt file in the `public` directory also references this URL, so make sure to update it manually or replace `[NEXT_PUBLIC_SITE_URL]` with your actual domain when deploying.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -12,6 +12,16 @@ export interface PublishedToolMetadata {
   icon_name: string | null;
 }
 
+export interface SitemapToolData {
+  slug: string;
+  updated_at: string;
+}
+
+export interface SitemapPageData {
+  slug: string;
+  updated_at: string;
+}
+
 /**
  * Fetch all published tools metadata for the public tools listing page
  * Returns lightweight tool data for search, filtering, and display
@@ -35,6 +45,57 @@ export async function fetchAllPublishedToolsMetadata(): Promise<PublishedToolMet
   } catch (error) {
     console.error('Unexpected error in fetchAllPublishedToolsMetadata:', error);
     throw new Error('Failed to fetch published tools');
+  }
+}
+
+/**
+ * Fetch published tools data for sitemap generation
+ * Returns slug and updated_at for all published tools
+ */
+export async function fetchAllPublishedToolSlugsAndTimestamps(): Promise<SitemapToolData[]> {
+  try {
+    const supabase = await createServerComponentClient();
+    
+    const { data: tools, error } = await supabase
+      .from('tools')
+      .select('slug, updated_at')
+      .eq('is_published', true)
+      .order('updated_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching published tools for sitemap:', error);
+      throw new Error('Failed to fetch published tools for sitemap');
+    }
+    
+    return tools || [];
+  } catch (error) {
+    console.error('Unexpected error in fetchAllPublishedToolSlugsAndTimestamps:', error);
+    throw new Error('Failed to fetch published tools for sitemap');
+  }
+}
+
+/**
+ * Fetch published content pages data for sitemap generation
+ * Returns slug and updated_at for all content pages
+ */
+export async function fetchAllPublishedContentPageSlugsAndTimestamps(): Promise<SitemapPageData[]> {
+  try {
+    const supabase = await createServerComponentClient();
+    
+    const { data: pages, error } = await supabase
+      .from('content_pages')
+      .select('slug, updated_at')
+      .order('updated_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching content pages for sitemap:', error);
+      throw new Error('Failed to fetch content pages for sitemap');
+    }
+    
+    return pages || [];
+  } catch (error) {
+    console.error('Unexpected error in fetchAllPublishedContentPageSlugsAndTimestamps:', error);
+    throw new Error('Failed to fetch content pages for sitemap');
   }
 }
 
