@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "sonner";
+import AdSense from "@/components/adsense/adsense";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <AdSense pId="pub-7866498376836059"/>
         {/* Google AdSense Script */}
         {adsensePublisherId && (
           <Script
