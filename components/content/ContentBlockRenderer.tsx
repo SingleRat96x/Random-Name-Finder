@@ -95,13 +95,40 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
 
     case 'ad_slot_manual':
       const identifier = content_data.identifier as string;
+      const adSlotId = content_data.ad_slot_id as string;
+      const adClient = 'ca-pub-7866498376836059'; // replace with your own AdSense client ID
       const isDevelopment = process.env.NODE_ENV === 'development';
-      
+
+      if (!isDevelopment && adSlotId) {
+        return (
+          <>
+            <script
+              async
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+              crossOrigin="anonymous"
+            ></script>
+            <ins
+              className="adsbygoogle"
+              style={{ display: 'block' }}
+              data-ad-client={adClient}
+              data-ad-slot={adSlotId}
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `(adsbygoogle = window.adsbygoogle || []).push({});`,
+              }}
+            />
+          </>
+        );
+      }
+
       return (
-        <div 
+        <div
           className={`manual-ad-slot-placeholder ${
-            isDevelopment 
-              ? 'bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center my-6' 
+            isDevelopment
+              ? 'bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center my-6'
               : 'my-6 min-h-[50px]'
           }`}
           data-ad-identifier={identifier}
@@ -111,6 +138,9 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
               <div className="text-sm font-medium mb-1">Advertisement Slot</div>
               {identifier && (
                 <div className="text-xs">ID: {identifier}</div>
+              )}
+              {adSlotId && (
+                <div className="text-xs">Ad Slot: {adSlotId}</div>
               )}
             </div>
           )}
@@ -182,7 +212,6 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
       );
 
     case 'contact_form':
-      // Placeholder for contact form - this would be replaced with actual form component
       return (
         <div className="bg-card border border-border rounded-lg p-6 my-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Contact Form</h3>
@@ -193,7 +222,6 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
       );
 
     default:
-      // Fallback for unknown block types
       return (
         <div className="bg-muted/50 border border-dashed border-muted-foreground/30 rounded-lg p-4 my-4">
           <div className="text-sm text-muted-foreground">
@@ -205,4 +233,4 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
         </div>
       );
   }
-} 
+}
