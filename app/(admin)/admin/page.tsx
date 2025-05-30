@@ -4,7 +4,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-2">
           Welcome to the Admin Area. Management tools will appear here.
         </p>

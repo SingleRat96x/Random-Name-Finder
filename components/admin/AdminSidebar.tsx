@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,8 +10,10 @@ import {
   FileText,
   Shield,
   Wrench,
-  Brain
+  Brain,
+  X
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const adminNavItems = [
   {
@@ -45,39 +48,109 @@ const adminNavItems = [
   },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
 
+  // Close sidebar when clicking on a navigation item (mobile)
+  const handleNavClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  // Close sidebar on escape key (mobile)
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+
   return (
-    <div className="w-64 bg-background border-r border-border flex-shrink-0">
-      <div className="p-6">
-        <div className="flex items-center space-x-2 mb-8">
-          <Shield className="h-8 w-8 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
-        </div>
-        
-        <nav className="space-y-2">
-          {adminNavItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted hover:text-primary'
-                }`}
+    <>
+      {/* Mobile overlay */}
+      {isOpen && onClose && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`
+          bg-background border-r border-border flex-shrink-0 z-50
+          lg:static lg:translate-x-0 lg:w-64
+          ${onClose 
+            ? `fixed inset-y-0 left-0 w-80 transform transition-transform duration-300 ease-in-out ${
+                isOpen ? 'translate-x-0' : '-translate-x-full'
+              }`
+            : 'w-64'
+          }
+        `}
+      >
+        <div className="p-6">
+          {/* Mobile header with close button */}
+          {onClose && (
+            <div className="lg:hidden flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-6 w-6 text-primary" />
+                <h1 className="text-lg font-semibold text-foreground">Admin Panel</h1>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="p-2"
+                aria-label="Close navigation menu"
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
+
+          {/* Desktop header */}
+          <div className={`${onClose ? 'hidden lg:flex' : 'flex'} items-center space-x-2 mb-8`}>
+            <Shield className="h-8 w-8 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
+          </div>
+          
+          <nav className="space-y-2">
+            {adminNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted hover:text-primary'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 } 

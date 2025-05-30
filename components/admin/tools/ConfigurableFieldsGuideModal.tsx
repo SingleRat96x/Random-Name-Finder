@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Code, Settings, Type, Hash, ToggleLeft, List, Sparkles, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BookOpen, Code, Settings, Type, Hash, ToggleLeft, List, Sparkles, X, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ConfigurableFieldsGuideModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface DocumentationSection {
 
 export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFieldsGuideModalProps) {
   const [activeSectionId, setActiveSectionId] = useState('intro');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const sections: DocumentationSection[] = [
     {
@@ -59,7 +61,7 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
       id: 'select',
       title: 'Select Dropdown',
       icon: <List className="h-4 w-4" />,
-      content: <SelectContent />
+      content: <SelectDropdownContent />
     },
     {
       id: 'number',
@@ -100,34 +102,111 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
   ];
 
   const activeSection = sections.find(s => s.id === activeSectionId);
+  const activeSectionIndex = sections.findIndex(s => s.id === activeSectionId);
+  const canGoBack = activeSectionIndex > 0;
+  const canGoForward = activeSectionIndex < sections.length - 1;
+
+  const goToPreviousSection = () => {
+    if (canGoBack) {
+      setActiveSectionId(sections[activeSectionIndex - 1].id);
+    }
+  };
+
+  const goToNextSection = () => {
+    if (canGoForward) {
+      setActiveSectionId(sections[activeSectionIndex + 1].id);
+    }
+  };
+
+  const handleSectionChange = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    setIsMobileSidebarOpen(false); // Close mobile sidebar when section is selected
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] h-[95vh] max-w-none sm:w-[80vw] sm:h-[90vh] sm:max-w-[80vw] sm:max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+      <DialogContent className="w-[95vw] h-[95vh] max-w-none lg:w-[85vw] lg:h-[90vh] lg:max-w-[85vw] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="flex items-center space-x-2 text-lg sm:text-xl">
             <Code className="h-5 w-5" />
             <span>Configurable Fields Documentation</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Complete guide for structuring configurable_fields JSON when creating or editing tools
           </DialogDescription>
         </DialogHeader>
         
+        {/* Mobile Header with Section Selector */}
+        <div className="lg:hidden px-6 py-3 border-b bg-muted/30">
+          <div className="flex items-center justify-between gap-4">
+            <Select value={activeSectionId} onValueChange={handleSectionChange}>
+              <SelectTrigger className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    <div className="flex items-center space-x-2">
+                      {section.icon}
+                      <span>{section.title}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              className="px-3"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
         <div className="flex-1 flex overflow-hidden">
+          {/* Mobile Sidebar Overlay */}
+          {isMobileSidebarOpen && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black/50 z-50"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar */}
-          <div className="w-1/4 border-r border-border">
+          <div className={`
+            lg:w-1/4 lg:border-r lg:border-border lg:static lg:translate-x-0
+            ${isMobileSidebarOpen 
+              ? 'fixed inset-y-0 left-0 w-80 bg-background border-r border-border z-50 transform translate-x-0' 
+              : 'hidden lg:block'
+            }
+          `}>
+            <div className="lg:hidden p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold">Sections</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileSidebarOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
             <ScrollArea className="h-full p-4">
               <div className="space-y-1">
                 {sections.map((section) => (
                   <Button
                     key={section.id}
                     variant={activeSectionId === section.id ? 'secondary' : 'ghost'}
-                    className="w-full justify-start text-left"
-                    onClick={() => setActiveSectionId(section.id)}
+                    className="w-full justify-start text-left text-sm"
+                    onClick={() => handleSectionChange(section.id)}
                   >
-                    {section.icon}
-                    <span className="ml-2">{section.title}</span>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      {section.icon}
+                      <span className="truncate">{section.title}</span>
+                    </div>
                   </Button>
                 ))}
               </div>
@@ -135,15 +214,48 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
           </div>
           
           {/* Main Content */}
-          <div className="flex-1">
-            <ScrollArea className="h-full p-6">
-              {activeSection?.content}
+          <div className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1 p-4 sm:p-6">
+              <div className="max-w-none">
+                {activeSection?.content}
+              </div>
             </ScrollArea>
+            
+            {/* Mobile Navigation Footer */}
+            <div className="lg:hidden border-t bg-background p-4">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousSection}
+                  disabled={!canGoBack}
+                  className="flex items-center space-x-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
+                
+                <div className="text-sm text-muted-foreground">
+                  {activeSectionIndex + 1} of {sections.length}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextSection}
+                  disabled={!canGoForward}
+                  className="flex items-center space-x-2"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
         
-        <DialogFooter>
-          <Button onClick={onClose} variant="outline">
+        <DialogFooter className="px-6 py-4 border-t">
+          <Button onClick={onClose} variant="outline" className="w-full sm:w-auto">
             <X className="h-4 w-4 mr-2" />
             Close
           </Button>
@@ -157,23 +269,23 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
 function IntroContent() {
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Introduction to Configurable Fields</h2>
-      <p className="text-muted-foreground">
+      <h2 className="text-xl sm:text-2xl font-bold">Introduction to Configurable Fields</h2>
+      <p className="text-muted-foreground text-sm sm:text-base">
         Configurable fields define the user interface elements that appear on your tool&apos;s public page. 
         They allow users to customize parameters before generating names with AI.
       </p>
       
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">What are Configurable Fields?</CardTitle>
+          <CardTitle className="text-base sm:text-lg">What are Configurable Fields?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p>
+          <p className="text-sm sm:text-base">
             Each configurable field represents an input control (text box, dropdown, switch, etc.) 
             that users can interact with on your tool&apos;s page. The values they enter are passed to 
             the AI generation system to customize the output.
           </p>
-          <p>
+          <p className="text-sm sm:text-base">
             Fields are defined as a JSON array where each object represents one input control 
             with its properties, validation rules, and default values.
           </p>
@@ -182,10 +294,10 @@ function IntroContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Basic Structure</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Basic Structure</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+          <pre className="bg-muted p-3 sm:p-4 rounded-md overflow-x-auto text-xs sm:text-sm">
             <code>{`[
   {
     "name": "field_name",
@@ -201,17 +313,17 @@ function IntroContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Tool Card Styling (Optional)</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Tool Card Styling (Optional)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p>
+          <p className="text-sm sm:text-base">
             You can specify an <strong>Icon Name</strong> (from Lucide React) and an <strong>Accent Color Class</strong> 
             (Tailwind CSS classes) in the main tool settings. These will be used to give each tool card on the 
-            public <code>/tools</code> listing page a unique visual touch.
+            public <code className="text-xs sm:text-sm">/tools</code> listing page a unique visual touch.
           </p>
-          <p>
-            For example, <code>accent_color_class</code> could be <code>border-t-4 border-blue-500</code> or 
-            <code>text-green-600</code> to style an icon or card element.
+          <p className="text-sm sm:text-base">
+            For example, <code className="text-xs sm:text-sm">accent_color_class</code> could be <code className="text-xs sm:text-sm">border-t-4 border-blue-500</code> or 
+            <code className="text-xs sm:text-sm">text-green-600</code> to style an icon or card element.
           </p>
         </CardContent>
       </Card>
@@ -222,23 +334,23 @@ function IntroContent() {
 function ToolCategoryContent() {
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Tool Category</h2>
-      <p className="text-muted-foreground">
+      <h2 className="text-xl sm:text-2xl font-bold">Tool Category</h2>
+      <p className="text-muted-foreground text-sm sm:text-base">
         The Tool Category field helps organize and group tools on the public site for better user navigation and discovery.
       </p>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">What is Tool Category?</CardTitle>
+          <CardTitle className="text-base sm:text-lg">What is Tool Category?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p>
+          <p className="text-sm sm:text-base">
             The category field is a simple text input that allows you to assign a category to your tool. 
             This category will be used to group tools together on the public tools listing page, making it 
             easier for users to find tools that match their interests.
           </p>
-          <p>
-            Categories are stored in the <code>tools</code> table as a text field and can be filtered 
+          <p className="text-sm sm:text-base">
+            Categories are stored in the <code className="text-xs sm:text-sm">tools</code> table as a text field and can be filtered 
             on the public site to help users discover related tools.
           </p>
         </CardContent>
@@ -246,7 +358,7 @@ function ToolCategoryContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Usage Guidelines</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Usage Guidelines</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p><strong>Keep it consistent:</strong> Use standardized category names to avoid fragmenting similar tools.</p>
@@ -264,7 +376,7 @@ function ToolCategoryContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Implementation Notes</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Implementation Notes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <p>• Category field is optional - tools can exist without a category</p>
@@ -526,7 +638,7 @@ function TextareaContent() {
   );
 }
 
-function SelectContent() {
+function SelectDropdownContent() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Select Dropdown Field</h2>
