@@ -17,15 +17,15 @@ const supabaseAdmin = createClient(
 interface AuthHookPayload {
   type: string;
   table: string;
-  record?: any;
+  record?: UserRecord;
   schema: string;
-  old_record?: any;
+  old_record?: UserRecord;
 }
 
 interface UserRecord {
   id: string;
   email?: string;
-  raw_user_meta_data?: Record<string, any>;
+  raw_user_meta_data?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
 }
@@ -72,10 +72,10 @@ serve(async (req) => {
       user = payload.record;
     } else if (payload.type === 'INSERT' && payload.table === 'users') {
       // Alternative webhook format
-      user = payload as any;
+      user = payload as unknown as UserRecord;
     } else {
       // Direct user object (some Auth Hook formats)
-      user = payload as any;
+      user = payload as unknown as UserRecord;
     }
 
     // Validate required user data
@@ -118,7 +118,7 @@ serve(async (req) => {
     console.log(`Processing profile creation for user: ${user.id}`);
 
     // Call the Postgres function to create the user profile
-    const { data, error: rpcError } = await supabaseAdmin.rpc('create_user_profile', {
+    const { error: rpcError } = await supabaseAdmin.rpc('create_user_profile', {
       p_user_id: user.id,
       p_email: user.email || null,
       p_raw_user_meta_data: user.raw_user_meta_data || {},

@@ -8,7 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, profile, isLoading, logout } = useAuth();
+  const { user, profile, loading, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -66,7 +66,7 @@ export default function Navbar() {
             
             {/* Authentication Links */}
             <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-border">
-              {isLoading ? (
+              {loading ? (
                 // Loading state
                 <div className="flex items-center px-3 py-2">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -203,7 +203,7 @@ export default function Navbar() {
             
             {/* Mobile Authentication Links */}
             <div className="border-t border-border pt-2 mt-2">
-              {isLoading ? (
+              {loading ? (
                 // Loading state
                 <div className="flex items-center justify-center px-3 py-2">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
