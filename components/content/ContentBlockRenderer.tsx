@@ -95,18 +95,25 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
 
     case 'ad_slot_manual':
       const identifier = content_data.identifier as string;
+      const isDevelopment = process.env.NODE_ENV === 'development';
       
       return (
         <div 
-          className="ad-slot-manual bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center my-6"
-          data-identifier={identifier}
+          className={`manual-ad-slot-placeholder ${
+            isDevelopment 
+              ? 'bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center my-6' 
+              : 'my-6 min-h-[50px]'
+          }`}
+          data-ad-identifier={identifier}
         >
-          <div className="text-muted-foreground">
-            <div className="text-sm font-medium mb-1">Advertisement Slot</div>
-            {identifier && (
-              <div className="text-xs">ID: {identifier}</div>
-            )}
-          </div>
+          {isDevelopment && (
+            <div className="text-muted-foreground">
+              <div className="text-sm font-medium mb-1">Advertisement Slot</div>
+              {identifier && (
+                <div className="text-xs">ID: {identifier}</div>
+              )}
+            </div>
+          )}
         </div>
       );
 

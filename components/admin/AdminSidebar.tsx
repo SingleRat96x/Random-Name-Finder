@@ -11,6 +11,7 @@ import {
   Shield,
   Wrench,
   Brain,
+  BarChart3,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,11 @@ const adminNavItems = [
     name: 'Dashboard',
     href: '/admin',
     icon: LayoutDashboard,
+  },
+  {
+    name: 'Analytics',
+    href: '/admin/analytics',
+    icon: BarChart3,
   },
   {
     name: 'Users',

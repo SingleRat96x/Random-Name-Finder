@@ -128,23 +128,23 @@ export function NameResultsDisplay({ names, isLoading, error, toolName, toolSlug
       }
     } else {
       // Guest user: use client-side favorites
-      setFavoriteNames(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(name)) {
-          newSet.delete(name);
-          toast.success(`"${name}" removed from favorites`);
-        } else {
-          newSet.add(name);
-          toast.success(`"${name}" added to favorites`);
-          
+    setFavoriteNames(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(name)) {
+        newSet.delete(name);
+        toast.success(`"${name}" removed from favorites`);
+      } else {
+        newSet.add(name);
+        toast.success(`"${name}" added to favorites`);
+        
           // Show guest prompt if this is their first favorite
           if (newSet.size === 1 && !hasShownGuestPrompt) {
-            setShowGuestPrompt(true);
-            setHasShownGuestPrompt(true);
-          }
+          setShowGuestPrompt(true);
+          setHasShownGuestPrompt(true);
         }
-        return newSet;
-      });
+      }
+      return newSet;
+    });
     }
   };
 
@@ -200,12 +200,12 @@ export function NameResultsDisplay({ names, isLoading, error, toolName, toolSlug
       toggleFavorite(name);
     } else {
       // For guest users, remove from client-side favorites
-      setFavoriteNames(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(name);
-        toast.success(`"${name}" removed from favorites`);
-        return newSet;
-      });
+    setFavoriteNames(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(name);
+      toast.success(`"${name}" removed from favorites`);
+      return newSet;
+    });
     }
   };
 
@@ -284,58 +284,58 @@ export function NameResultsDisplay({ names, isLoading, error, toolName, toolSlug
                 const isSaving = savingNames.has(name);
                 
                 return (
-                  <div
-                    key={`${name}-${index}`}
-                    className="group relative p-3 border rounded-lg hover:shadow-sm transition-all cursor-pointer bg-card"
-                    onClick={() => copyToClipboard(name)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                        {name}
-                      </span>
-                      
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 hover:scale-110 transition-transform"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(name);
-                          }}
+                <div
+                  key={`${name}-${index}`}
+                  className="group relative p-3 border rounded-lg hover:shadow-sm transition-all cursor-pointer bg-card"
+                  onClick={() => copyToClipboard(name)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                      {name}
+                    </span>
+                    
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:scale-110 transition-transform"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(name);
+                        }}
                           disabled={isSaving}
-                        >
+                      >
                           {isSaving ? (
                             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500"></div>
                           ) : (
-                            <Heart 
-                              className={`h-3 w-3 transition-colors ${
+                        <Heart 
+                          className={`h-3 w-3 transition-colors ${
                                 isFavorited 
-                                  ? 'fill-red-500 text-red-500' 
-                                  : 'text-muted-foreground hover:text-red-400'
-                              }`} 
-                            />
+                              ? 'fill-red-500 text-red-500' 
+                              : 'text-muted-foreground hover:text-red-400'
+                          }`} 
+                        />
                           )}
-                        </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 hover:scale-110 transition-transform"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(name);
-                          }}
-                        >
-                          {copiedNames.has(name) ? (
-                            <Check className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <Copy className="h-3 w-3 text-muted-foreground hover:text-primary transition-colors" />
-                          )}
-                        </Button>
-                      </div>
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:scale-110 transition-transform"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(name);
+                        }}
+                      >
+                        {copiedNames.has(name) ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3 text-muted-foreground hover:text-primary transition-colors" />
+                        )}
+                      </Button>
                     </div>
                   </div>
+                </div>
                 );
               })}
             </div>
