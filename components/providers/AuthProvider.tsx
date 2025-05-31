@@ -39,6 +39,10 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+// Simple in-memory cache to prevent duplicate queries
+const profileCache = new Map<string, UserProfile | null>();
+const savedNamesCache = new Map<string, SavedName[]>();
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -50,19 +54,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Data fetchers
   const fetchUserProfile = useCallback(async (uid: string) => {
+    if (profileCache.has(uid)) {
+      const cachedProfile = profileCache.get(uid) ?? null;
+      setProfile(cachedProfile);
+      return;
+    }
+
     const { data, error } = await supabase.from('profiles').select('*').eq('user_id', uid).single();
     if (error) console.error(error);
-    setProfile(data ?? null);
+    const profileData = data ?? null;
+    profileCache.set(uid, profileData);
+    setProfile(profileData);
   }, []);
 
   const fetchSavedNames = useCallback(async (uid: string) => {
+    if (savedNamesCache.has(uid)) {
+      const cachedNames = savedNamesCache.get(uid);
+      setSavedNames(cachedNames || []);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('user_saved_names')
       .select('*')
       .eq('user_id', uid)
       .order('favorited_at', { ascending: false });
     if (error) console.error(error);
-    setSavedNames(data ?? []);
+    const namesData = data ?? [];
+    savedNamesCache.set(uid, namesData);
+    setSavedNames(namesData);
   }, []);
 
   useEffect(() => {
@@ -71,24 +91,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const sessionUser = data.session?.user ?? null;
       setUser(sessionUser);
       setSession(data.session);
+      setLoading(false);
       
       if (sessionUser) {
-        await Promise.all([fetchUserProfile(sessionUser.id), fetchSavedNames(sessionUser.id)]);
+        console.time('profile+names');
+        Promise.allSettled([fetchUserProfile(sessionUser.id), fetchSavedNames(sessionUser.id)]);
+        console.timeEnd('profile+names');
       }
-      
-      setLoading(false);
     });
 
     // 2) listen for all future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
       setUser(sess?.user ?? null);
       setSession(sess);
+      setLoading(false);        // ensure spinner stops in all tabs
       
       if (sess?.user) {
-        await Promise.all([fetchUserProfile(sess.user.id), fetchSavedNames(sess.user.id)]);
+        console.time('profile+names');
+        Promise.allSettled([fetchUserProfile(sess.user.id), fetchSavedNames(sess.user.id)]);
+        console.timeEnd('profile+names');
       } else {
         setProfile(null);
         setSavedNames(null);
+        // Clear cache when user logs out
+        profileCache.clear();
+        savedNamesCache.clear();
       }
     });
 
@@ -96,13 +123,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchUserProfile, fetchSavedNames]);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error during logout:', error);
+      setLoading(false);
+      return;
+    }
+    router.push('/login');          // rely on middleware to guard other pages
   };
 
   const refreshSavedNames = async () => {
     if (user) {
+      // Clear cache for this user before fetching fresh data
+      savedNamesCache.delete(user.id);
       await fetchSavedNames(user.id);
     }
   };
