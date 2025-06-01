@@ -1,20 +1,38 @@
-export default function HomePage() {
+import { Metadata } from 'next';
+import { fetchFeaturedTools } from '@/app/tools/actions';
+import { HeroSection } from '@/components/landing/HeroSection';
+import { FeaturedToolsSection } from '@/components/landing/FeaturedToolsSection';
+import { PlatformFeaturesSection } from '@/components/landing/PlatformFeaturesSection';
+import { CallToActionSection } from '@/components/landing/CallToActionSection';
+
+export const metadata: Metadata = {
+  title: 'Random Name Finder | AI-Powered Name Generation Tools',
+  description: 'Find the perfect name instantly with our AI-powered name generation tools. Create unique names for businesses, characters, brands, and more. Start free today!',
+  keywords: 'name generator, AI names, business names, character names, brand names, creative tools',
+  openGraph: {
+    title: 'Random Name Finder | AI-Powered Name Generation Tools',
+    description: 'Find the perfect name instantly with our AI-powered name generation tools. Create unique names for businesses, characters, brands, and more.',
+    type: 'website',
+  },
+};
+
+export default async function HomePage() {
+  // Fetch featured tools server-side
+  const featuredTools = await fetchFeaturedTools(3);
+
   return (
-    <div className="flex flex-col items-center justify-center p-24 text-center">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-          Welcome to{' '}
-          <span className="text-primary">Random Name Finder</span>
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Generate unique and creative names for all your needs. Whether you&apos;re looking for business names, character names, or any other type of naming inspiration, we&apos;re here to help.
-        </p>
-        <div className="pt-8">
-          <div className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-            Coming Soon: Name Generation Tools
-          </div>
-        </div>
-      </div>
-    </div>
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <HeroSection />
+      
+      {/* Featured Tools Section */}
+      <FeaturedToolsSection tools={featuredTools} />
+      
+      {/* Platform Features Section */}
+      <PlatformFeaturesSection />
+      
+      {/* Call to Action Section */}
+      <CallToActionSection />
+    </main>
   );
 }

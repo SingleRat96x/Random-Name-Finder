@@ -54,6 +54,7 @@ export async function saveFavoriteName(name: string, toolSlug: string): Promise<
     revalidateTag('user-saved-names');
     revalidatePath('/dashboard');
     revalidatePath('/profile');
+    revalidatePath('/saved-names');
 
     return { success: true, savedName };
     
@@ -99,6 +100,7 @@ export async function removeFavoriteNameById(nameId: string): Promise<RemoveName
     revalidateTag('user-saved-names');
     revalidatePath('/dashboard');
     revalidatePath('/profile');
+    revalidatePath('/saved-names');
 
     return { success: true };
     
@@ -150,6 +152,7 @@ export async function removeFavoriteName(name: string, toolSlug: string): Promis
     revalidateTag('user-saved-names');
     revalidatePath('/dashboard');
     revalidatePath('/profile');
+    revalidatePath('/saved-names');
 
     return { success: true };
     

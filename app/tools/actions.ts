@@ -170,4 +170,31 @@ export async function fetchOtherPublishedTools(params: {
     console.error('Unexpected error in fetchOtherPublishedTools:', error);
     return []; // Return empty array on error to not break the page
   }
+}
+
+/**
+ * Fetch featured tools for the landing page
+ * Returns a limited number of high-quality published tools
+ */
+export async function fetchFeaturedTools(count: number = 3): Promise<PublishedToolMetadata[]> {
+  try {
+    const supabase = await createServerComponentClient();
+    
+    const { data: tools, error } = await supabase
+      .from('tools')
+      .select('id, name, slug, description, category, accent_color_class, icon_name')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false }) // Get newest tools first
+      .limit(count);
+      
+    if (error) {
+      console.error('Error fetching featured tools:', error);
+      return [];
+    }
+    
+    return tools || [];
+  } catch (error) {
+    console.error('Unexpected error in fetchFeaturedTools:', error);
+    return [];
+  }
 } 
