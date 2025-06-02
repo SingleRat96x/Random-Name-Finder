@@ -23,6 +23,9 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
     };
   }
 
+  // Generate dynamic OG image URL
+  const ogImageUrl = `https://randomnamefinder.com/api/og?title=${encodeURIComponent(tool.name)}&subtitle=${encodeURIComponent(tool.description || `Generate unique ${tool.ai_prompt_category || 'names'} with AI`)}&category=${encodeURIComponent(tool.category || tool.ai_prompt_category || '')}`;
+
   return {
     title: `${tool.name} | Random Name Finder`,
     description: tool.description || `Generate unique names with our ${tool.name.toLowerCase()}. Powered by AI for creative and personalized results.`,
@@ -37,7 +40,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
       url: `https://randomnamefinder.com/tools/${tool.slug}`,
       images: [
         {
-          url: '/og-default.png',
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: `${tool.name} - Random Name Finder`,
@@ -48,7 +51,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
       card: 'summary_large_image',
       title: tool.name,
       description: tool.description || `Generate unique names with our ${tool.name.toLowerCase()}`,
-      images: ['/og-default.png'],
+      images: [ogImageUrl],
     },
   };
 }

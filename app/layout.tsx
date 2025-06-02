@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-default.png",
+        url: "https://randomnamefinder.com/api/og?title=Random%20Name%20Finder&subtitle=Generate%20AI-powered%20names%20instantly",
         width: 1200,
         height: 630,
         alt: "Random Name Finder - AI-powered name generation",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Random Name Finder",
     description: "Find the perfect name for anything in seconds with AI.",
-    images: ["/og-default.png"],
+    images: ["https://randomnamefinder.com/api/og?title=Random%20Name%20Finder&subtitle=Generate%20AI-powered%20names%20instantly"],
     creator: "@randomnamefinder",
   },
   robots: {

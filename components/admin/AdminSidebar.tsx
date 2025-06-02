@@ -12,6 +12,7 @@ import {
   Wrench,
   Brain,
   BarChart3,
+  Mail,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,11 @@ const adminNavItems = [
     name: 'Users',
     href: '/admin/users',
     icon: Users,
+  },
+  {
+    name: 'Contact Submissions',
+    href: '/admin/contact-submissions',
+    icon: Mail,
   },
   {
     name: 'Content',

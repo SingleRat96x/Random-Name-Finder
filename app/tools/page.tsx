@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     url: 'https://randomnamefinder.com/tools',
     images: [
       {
-        url: '/og-default.png',
+        url: 'https://randomnamefinder.com/api/og?title=Name%20Generator%20Tools&subtitle=Discover%20AI-powered%20generators%20for%20every%20need&category=Tools',
         width: 1200,
         height: 630,
         alt: 'Random Name Finder Tools - AI-powered name generators',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Name Generator Tools - Find Your Perfect Name',
     description: 'Discover AI-powered name generators for every need. From fantasy to business names.',
-    images: ['/og-default.png'],
+    images: ['https://randomnamefinder.com/api/og?title=Name%20Generator%20Tools&subtitle=Discover%20AI-powered%20generators%20for%20every%20need&category=Tools'],
   },
 };
 
