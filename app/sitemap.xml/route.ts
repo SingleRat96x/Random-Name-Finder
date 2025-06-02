@@ -6,14 +6,9 @@ import {
 
 export async function GET() {
   try {
-    // Get the base URL from environment variable
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    // Get the base URL from environment variable with fallback
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://randomnamefinder.com';
     
-    if (!baseUrl) {
-      console.error('NEXT_PUBLIC_SITE_URL environment variable is not set');
-      return new NextResponse('Site URL not configured', { status: 500 });
-    }
-
     // Fetch data for sitemap
     const [tools, contentPages] = await Promise.all([
       fetchAllPublishedToolSlugsAndTimestamps(),

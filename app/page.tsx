@@ -60,11 +60,29 @@ const CallToActionSection = dynamic(
 export const metadata: Metadata = {
   title: 'Random Name Finder | AI-Powered Name Generation Tools',
   description: 'Find the perfect name instantly with our AI-powered name generation tools. Create unique names for businesses, characters, brands, and more. Start free today!',
-  keywords: 'name generator, AI names, business names, character names, brand names, creative tools',
+  keywords: 'name generator, AI names, business names, character names, brand names, creative tools, random names, name finder',
+  alternates: {
+    canonical: 'https://randomnamefinder.com'
+  },
   openGraph: {
     title: 'Random Name Finder | AI-Powered Name Generation Tools',
     description: 'Find the perfect name instantly with our AI-powered name generation tools. Create unique names for businesses, characters, brands, and more.',
     type: 'website',
+    url: 'https://randomnamefinder.com',
+    images: [
+      {
+        url: '/og-default.png',
+        width: 1200,
+        height: 630,
+        alt: 'Random Name Finder - AI-powered name generation platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Random Name Finder | AI-Powered Name Generation',
+    description: 'Find the perfect name instantly with AI. Free tools for businesses, characters, brands & more.',
+    images: ['/og-default.png'],
   },
 };
 
