@@ -1,6 +1,8 @@
 'use server';
 
 import { AIGenerationResponse } from '@/lib/types/tools';
+import { logToolUsage } from '@/app/actions/toolInteractionsActions';
+import { createServerActionClient } from '@/lib/supabase/server';
 
 /**
  * Generate names using AI API
@@ -15,6 +17,7 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
     const count = parseInt(formData.get('count') as string, 10);
     const keyword = formData.get('keyword') as string;
     const nameLengthPreference = formData.get('name_length_preference') as string;
+    const toolSlug = formData.get('tool_slug') as string; // Extract tool slug from form data
     
     // Validate inputs
     if (!aiPromptCategory) {
@@ -108,6 +111,27 @@ export async function generateNamesAction(formData: FormData): Promise<AIGenerat
         success: false, 
         error: 'Could not parse names from the response. Please try again.' 
       };
+    }
+
+    // Log tool usage for authenticated users after successful generation
+    if (toolSlug) {
+      try {
+        // Get current user to check if they're authenticated
+        const supabase = await createServerActionClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (!authError && user) {
+          // Log the tool usage (await to handle any errors properly)
+          const logResult = await logToolUsage(toolSlug);
+          if (!logResult.success) {
+            // Log the error but don't fail the name generation
+            console.warn('Failed to log tool usage:', logResult.error);
+          }
+        }
+      } catch (error) {
+        // Log the error but don't fail the name generation
+        console.warn('Error logging tool usage:', error);
+      }
     }
     
     return { success: true, names };

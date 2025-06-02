@@ -98,4 +98,38 @@ export interface SaveNameResponse {
 export interface RemoveNameResponse {
   success: boolean;
   error?: string;
+}
+
+// ============================================================================
+// Types for user tool interactions functionality (Dashboard recent tools)
+// ============================================================================
+
+export interface UserToolInteraction {
+  id: string;
+  user_id: string;
+  tool_slug: string;
+  last_used_at: string;
+  interaction_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecentToolInteraction {
+  tool_slug: string;
+  last_used_at: string;
+  tool_name?: string;
+  tool_icon?: string;
+  tool_description?: string;
+  tool_category?: string;
+}
+
+export interface RecentToolInteractionsResponse {
+  success: boolean;
+  interactions?: RecentToolInteraction[];
+  error?: string;
+}
+
+export interface LogToolUsageResponse {
+  success: boolean;
+  error?: string;
 } 

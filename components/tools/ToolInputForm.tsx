@@ -15,6 +15,7 @@ import { ConfigurableField, AIGenerationResponse, AvailableAIModel } from '@/lib
 import { generateNamesAction } from '@/app/tools/[toolSlug]/actions';
 
 interface ToolInputFormProps {
+  toolSlug: string;
   toolName: string;
   configurable_fields: ConfigurableField[];
   default_parameters: Record<string, unknown>;
@@ -26,6 +27,7 @@ interface ToolInputFormProps {
 }
 
 export function ToolInputForm({
+  toolSlug,
   toolName,
   configurable_fields,
   default_parameters,
@@ -68,15 +70,17 @@ export function ToolInputForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setIsLoading(true);
+    setError('');
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Create FormData
+      // Create FormData to send to server action
       const formData = new FormData();
-      formData.append('ai_prompt_category', ai_prompt_category);
       
+      // Add required fields
+      formData.append('ai_prompt_category', ai_prompt_category);
+      formData.append('tool_slug', toolSlug);
+
       // Use selected AI model or default
       const modelToUse = selectedAIModel === 'default' ? default_ai_model_identifier : selectedAIModel;
       if (modelToUse) {

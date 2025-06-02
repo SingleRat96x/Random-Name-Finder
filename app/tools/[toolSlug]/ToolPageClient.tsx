@@ -44,6 +44,7 @@ export function ToolPageClient({
     <div className="space-y-6">
       {/* Tool Input Form */}
       <ToolInputForm
+        toolSlug={toolSlug}
         toolName={toolName}
         configurable_fields={configurable_fields}
         default_parameters={default_parameters}

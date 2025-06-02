@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerComponentClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export interface PublishedToolMetadata {
   id: string;
@@ -20,6 +21,21 @@ export interface SitemapToolData {
 export interface SitemapPageData {
   slug: string;
   updated_at: string;
+}
+
+/**
+ * Create a public Supabase client for non-authenticated operations
+ * This avoids cookie access and allows static generation
+ */
+function createPublicSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(supabaseUrl, supabaseAnonKey);
 }
 
 /**
@@ -49,12 +65,12 @@ export async function fetchAllPublishedToolsMetadata(): Promise<PublishedToolMet
 }
 
 /**
- * Fetch published tools data for sitemap generation
+ * Fetch published tools data for sitemap generation (public access, no cookies)
  * Returns slug and updated_at for all published tools
  */
 export async function fetchAllPublishedToolSlugsAndTimestamps(): Promise<SitemapToolData[]> {
   try {
-    const supabase = await createServerComponentClient();
+    const supabase = createPublicSupabaseClient();
     
     const { data: tools, error } = await supabase
       .from('tools')
@@ -75,12 +91,12 @@ export async function fetchAllPublishedToolSlugsAndTimestamps(): Promise<Sitemap
 }
 
 /**
- * Fetch published content pages data for sitemap generation
+ * Fetch published content pages data for sitemap generation (public access, no cookies)
  * Returns slug and updated_at for all content pages
  */
 export async function fetchAllPublishedContentPageSlugsAndTimestamps(): Promise<SitemapPageData[]> {
   try {
-    const supabase = await createServerComponentClient();
+    const supabase = createPublicSupabaseClient();
     
     const { data: pages, error } = await supabase
       .from('content_pages')
@@ -173,12 +189,12 @@ export async function fetchOtherPublishedTools(params: {
 }
 
 /**
- * Fetch featured tools for the landing page
+ * Fetch featured tools for the landing page (public access, no cookies)
  * Returns a limited number of high-quality published tools
  */
 export async function fetchFeaturedTools(count: number = 3): Promise<PublishedToolMetadata[]> {
   try {
-    const supabase = await createServerComponentClient();
+    const supabase = createPublicSupabaseClient();
     
     const { data: tools, error } = await supabase
       .from('tools')

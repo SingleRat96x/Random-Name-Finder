@@ -200,10 +200,11 @@ export async function fetchUserSavedNames(): Promise<SavedNamesResponse> {
  * Check if a specific name is already saved by the user
  * @param name The name text to check
  * @param toolSlug The slug of the tool
+ * @returns Object with isSaved boolean and savedNameId if found
  */
 export async function isNameSaved(name: string, toolSlug: string): Promise<{ isSaved: boolean; savedNameId?: string }> {
   try {
-    if (!name || !toolSlug) {
+    if (!name || !name.trim() || !toolSlug || !toolSlug.trim()) {
       return { isSaved: false };
     }
 
@@ -217,7 +218,7 @@ export async function isNameSaved(name: string, toolSlug: string): Promise<{ isS
       return { isSaved: false };
     }
 
-    // Check if the name is already saved
+    // Check if name is already saved
     const { data: savedName, error: fetchError } = await supabase
       .from('user_saved_names')
       .select('id')
@@ -227,7 +228,7 @@ export async function isNameSaved(name: string, toolSlug: string): Promise<{ isS
       .single();
 
     if (fetchError) {
-      // Not found is expected when name is not saved
+      // If no match found, that's expected - return false
       if (fetchError.code === 'PGRST116') {
         return { isSaved: false };
       }
@@ -235,10 +236,57 @@ export async function isNameSaved(name: string, toolSlug: string): Promise<{ isS
       return { isSaved: false };
     }
 
-    return { isSaved: true, savedNameId: savedName.id };
+    return { 
+      isSaved: true, 
+      savedNameId: savedName?.id 
+    };
     
   } catch (error) {
     console.error('Unexpected error in isNameSaved:', error);
     return { isSaved: false };
+  }
+}
+
+/**
+ * Fetch recent saved names for the current user with a limit
+ * Optimized for dashboard display
+ * @param limit Maximum number of recent saved names to return (default: 5)
+ */
+export async function fetchRecentSavedNames(limit: number = 5): Promise<SavedNamesResponse> {
+  try {
+    // Validate limit
+    if (typeof limit !== 'number' || limit < 1 || limit > 50) {
+      return { success: false, error: 'Limit must be a number between 1 and 50' };
+    }
+
+    // Create Supabase client
+    const supabase = await createServerActionClient();
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      // Return empty results instead of error for unauthenticated users
+      // This allows the dashboard to render gracefully
+      return { success: true, savedNames: [] };
+    }
+
+    // Fetch recent saved names for the user (RLS automatically filters by user_id)
+    const { data: savedNames, error: fetchError } = await supabase
+      .from('user_saved_names')
+      .select('*')
+      .order('favorited_at', { ascending: false })
+      .limit(limit);
+
+    if (fetchError) {
+      console.error('Error fetching recent saved names:', fetchError);
+      return { success: false, error: 'Failed to fetch recent saved names' };
+    }
+
+    return { success: true, savedNames: savedNames || [] };
+    
+  } catch (error) {
+    console.error('Unexpected error in fetchRecentSavedNames:', error);
+    return { success: false, error: 'An unexpected error occurred' };
   }
 } 
