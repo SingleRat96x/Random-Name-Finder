@@ -37,7 +37,7 @@ export interface AvailableAIModel {
 export interface ConfigurableField {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'select' | 'textarea' | 'switch';
+  type: 'text' | 'number' | 'select' | 'textarea' | 'switch' | 'list';
   default?: unknown;
   options?: string[];
   min?: number;

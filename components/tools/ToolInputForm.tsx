@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Sparkles, Brain } from 'lucide-react';
+import { Loader2, Sparkles, Brain, Plus, X } from 'lucide-react';
 import { ConfigurableField, AIGenerationResponse, AvailableAIModel } from '@/lib/types/tools';
 import { generateNamesAction } from '@/app/tools/[toolSlug]/actions';
 
@@ -46,6 +46,9 @@ export function ToolInputForm({
         initialValues[field.name] = default_parameters[field.name];
       } else if (field.default !== undefined) {
         initialValues[field.name] = field.default;
+      } else if (field.type === 'list') {
+        // Initialize list fields with an empty array with one empty string
+        initialValues[field.name] = [''];
       }
     });
     
@@ -89,7 +92,12 @@ export function ToolInputForm({
       
       // Add all form values
       Object.entries(formValues).forEach(([key, value]) => {
-        formData.append(key, String(value));
+        if (Array.isArray(value)) {
+          // For list fields, serialize as JSON string
+          formData.append(key, JSON.stringify(value.filter(item => item !== '')));
+        } else {
+          formData.append(key, String(value));
+        }
       });
       
       // Call server action
@@ -115,7 +123,7 @@ export function ToolInputForm({
     const value = formValues[field.name];
     
     // Determine if field should span all columns
-    const shouldSpanAllColumns = field.layout_span_all_columns || field.type === 'textarea';
+    const shouldSpanAllColumns = field.layout_span_all_columns || field.type === 'textarea' || field.type === 'list';
     const fieldWrapperClass = shouldSpanAllColumns ? 'md:col-span-2' : '';
     
     // Special handling for name_length_preference field
@@ -263,6 +271,58 @@ export function ToolInputForm({
                 onCheckedChange={(checked) => handleInputChange(field.name, checked)}
               />
               <Label htmlFor={field.name} className="text-sm font-medium cursor-pointer">{field.label}</Label>
+            </div>
+            {field.description && (
+              <p className="text-xs text-muted-foreground">{field.description}</p>
+            )}
+          </div>
+        );
+        
+      case 'list':
+        const listValue = Array.isArray(value) ? value : [];
+        return (
+          <div key={field.name} className={`space-y-3 ${fieldWrapperClass}`}>
+            <Label htmlFor={field.name} className="text-sm font-medium">{field.label}</Label>
+            <div className="space-y-2">
+              {listValue.map((item: string, index: number) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <Input
+                    value={item}
+                    onChange={(e) => {
+                      const newList = [...listValue];
+                      newList[index] = e.target.value;
+                      handleInputChange(field.name, newList);
+                    }}
+                    placeholder={field.placeholder || "Enter list item"}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newList = listValue.filter((_: unknown, i: number) => i !== index);
+                      handleInputChange(field.name, newList);
+                    }}
+                    className="h-10 w-10 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newList = [...listValue, ''];
+                  handleInputChange(field.name, newList);
+                }}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
             </div>
             {field.description && (
               <p className="text-xs text-muted-foreground">{field.description}</p>

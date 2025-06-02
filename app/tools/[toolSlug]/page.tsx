@@ -71,7 +71,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
       if (!tool) return [];
       return fetchOtherPublishedTools({
         currentToolSlug: toolSlug,
-        count: 4,
+        count: 3,
         category: tool.category
       });
     })
