@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Search, Mail, Clock, CheckCircle, Archive, RefreshCw } from 'lucide-react';
 import { ContactSubmissionsList } from './ContactSubmissionsList';
@@ -67,23 +66,8 @@ export function ContactSubmissionsManager() {
 
   const pageSize = 20;
 
-  // Update URL with current filters
-  const updateURL = () => {
-    const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    if (sortBy !== 'submitted_at') params.set('sortBy', sortBy);
-    if (sortOrder !== 'desc') params.set('sortOrder', sortOrder);
-    if (currentPage !== 1) params.set('page', currentPage.toString());
-    if (dateFrom) params.set('dateFrom', dateFrom);
-    if (dateTo) params.set('dateTo', dateTo);
-
-    const newURL = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.replace(newURL);
-  };
-
   // Load data
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -110,13 +94,27 @@ export function ContactSubmissionsManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, searchTerm, dateFrom, dateTo, sortBy, sortOrder, currentPage, pageSize]);
 
   // Load data when filters change
   useEffect(() => {
+    const updateURL = () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.set('search', searchTerm);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (sortBy !== 'submitted_at') params.set('sortBy', sortBy);
+      if (sortOrder !== 'desc') params.set('sortOrder', sortOrder);
+      if (currentPage !== 1) params.set('page', currentPage.toString());
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+
+      const newURL = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(newURL);
+    };
+
     updateURL();
     loadData();
-  }, [searchTerm, statusFilter, sortBy, sortOrder, currentPage, dateFrom, dateTo]);
+  }, [searchTerm, statusFilter, sortBy, sortOrder, currentPage, dateFrom, dateTo, loadData, pathname, router]);
 
   // Handle bulk actions
   const handleBulkAction = async (action: 'read' | 'replied' | 'archived') => {
@@ -143,16 +141,6 @@ export function ContactSubmissionsManager() {
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'read': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'replied': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      case 'archived': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="space-y-6">

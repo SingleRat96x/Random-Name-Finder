@@ -43,6 +43,14 @@ interface FilterOptions {
   limit?: number;
 }
 
+interface SubmissionUpdateData {
+  status: 'new' | 'read' | 'replied' | 'archived';
+  updated_at: string;
+  read_at?: string;
+  replied_at?: string;
+  admin_notes?: string;
+}
+
 // Helper function to verify admin access
 async function verifyAdminAccess() {
   const supabase = await createServerActionClient();
@@ -155,7 +163,7 @@ export async function updateSubmissionStatus(
 ): Promise<ContactSubmission> {
   const { supabase } = await verifyAdminAccess();
   
-  const updateData: any = {
+  const updateData: SubmissionUpdateData = {
     status,
     updated_at: new Date().toISOString(),
   };
@@ -249,7 +257,7 @@ export async function bulkUpdateSubmissions(
 ): Promise<void> {
   const { supabase } = await verifyAdminAccess();
   
-  const updateData: any = {
+  const updateData: SubmissionUpdateData = {
     status,
     updated_at: new Date().toISOString(),
   };

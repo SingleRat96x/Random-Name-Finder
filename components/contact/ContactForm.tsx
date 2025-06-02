@@ -89,7 +89,7 @@ export function ContactForm() {
             <div>
               <h3 className="text-xl font-semibold text-foreground">Thank You!</h3>
               <p className="text-muted-foreground mt-2">
-                Your message has been sent successfully. We'll get back to you as soon as possible.
+                Your message has been sent successfully. We&apos;ll get back to you as soon as possible.
               </p>
             </div>
             <Button 
@@ -110,7 +110,7 @@ export function ContactForm() {
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">Get in Touch</CardTitle>
         <CardDescription className="text-center">
-          Have a question or feedback? We'd love to hear from you. Fill out the form below and we'll respond as soon as possible.
+          Have a question or feedback? We&apos;d love to hear from you. Fill out the form below and we&apos;ll respond as soon as possible.
         </CardDescription>
       </CardHeader>
       <CardContent>
