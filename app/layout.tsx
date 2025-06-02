@@ -8,9 +8,13 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SessionTimeoutWarning } from "@/components/providers/SessionTimeoutWarning";
 import { Toaster } from "sonner";
-import AdSense from "@/components/adsense/adsense";
 
-const inter = Inter({ subsets: ["latin"] });
+// Optimize font loading with display swap for better performance
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: "Random Name Finder",
@@ -27,16 +31,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <AdSense pId="pub-7866498376836059"/>
-        {/* Google AdSense Script */}
+        {/* Preconnect to external domains for faster loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Preconnect to AdSense domains */}
         {adsensePublisherId && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePublisherId}`}
-            crossOrigin="anonymous"
-            
-          />
+          <>
+            <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
+            <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+            <link rel="preconnect" href="https://adtrafficquality.google" />
+          </>
         )}
+        
+        {/* DNS prefetch for additional performance */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col`}>
         <ThemeProvider>
@@ -48,6 +57,15 @@ export default function RootLayout({
             <SessionTimeoutWarning />
           </AuthProvider>
         </ThemeProvider>
+
+        {/* Load AdSense script with lazy loading strategy */}
+        {adsensePublisherId && (
+          <Script
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePublisherId}`}
+            strategy="lazyOnload"
+            crossOrigin="anonymous"
+          />
+        )}
       </body>
     </html>
   );

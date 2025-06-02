@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/browser';
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const router = useRouter();
 
-  // Data fetchers
+  // Data fetchers - memoized to prevent recreation on every render
   const fetchUserProfile = useCallback(async (uid: string) => {
     if (profileCache.has(uid)) {
       const cachedProfile = profileCache.get(uid) ?? null;
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSavedNames(namesData);
   }, []);
 
-  // Session timeout functions
+  // Session timeout functions - memoized to prevent recreation
   const clearTimeouts = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -227,7 +227,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => subscription.unsubscribe();
   }, [fetchUserProfile, fetchSavedNames, clearTimeouts]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setLoading(true);
     clearTimeouts(); // Clear timeouts before logout
     
@@ -238,17 +238,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
     router.push('/login');          // rely on middleware to guard other pages
-  };
+  }, [clearTimeouts, router]);
 
-  const refreshSavedNames = async () => {
+  const refreshSavedNames = useCallback(async () => {
     if (user) {
       // Clear cache for this user before fetching fresh data
       savedNamesCache.delete(user.id);
       await fetchSavedNames(user.id);
     }
-  };
+  }, [user, fetchSavedNames]);
 
-  const value: AuthContextType = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo<AuthContextType>(() => ({
     user,
     session,
     profile,
@@ -258,7 +259,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshSavedNames,
     sessionTimeoutWarning,
     extendSession,
-  };
+  }), [
+    user,
+    session,
+    profile,
+    savedNames,
+    loading,
+    logout,
+    refreshSavedNames,
+    sessionTimeoutWarning,
+    extendSession,
+  ]);
 
   return (
     <AuthContext.Provider value={value}>
