@@ -174,7 +174,7 @@ export function ToolBrowser() {
 
       {/* Loading State with Skeletons */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {Array.from({ length: 12 }, (_, i) => (
             <ToolCardSkeleton key={i} />
           ))}
@@ -184,7 +184,7 @@ export function ToolBrowser() {
       {/* Tools Grid */}
       {!isLoading && displayedTools.length > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {displayedTools.map((tool) => (
               <ToolCard key={tool.id} tool={tool} />
             ))}

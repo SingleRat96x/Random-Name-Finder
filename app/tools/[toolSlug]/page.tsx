@@ -175,7 +175,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               <h2 className="text-2xl font-semibold mb-6 text-center text-foreground">
                 Other Tools You Might Like
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {otherTools.map(tool => (
                   <SmallToolCard key={tool.id} tool={tool} />
                 ))}
