@@ -81,6 +81,14 @@ export function ContentBlockItem({
           ? textContent.substring(0, 100) + '...' 
           : textContent || 'Empty paragraph';
       
+      case 'unordered_list':
+      case 'ordered_list':
+        const items = (contentData.items as string[]) || [];
+        if (items.length === 0) return 'Empty list';
+        const preview = items.slice(0, 2).join(', ');
+        const listType = blockType === 'unordered_list' ? 'Bullet' : 'Numbered';
+        return `${listType} list: ${preview}${items.length > 2 ? '...' : ''} (${items.length} items)`;
+      
       case 'ad_slot_manual':
         return `Ad slot: ${(contentData.identifier as string) || 'No identifier'}`;
       

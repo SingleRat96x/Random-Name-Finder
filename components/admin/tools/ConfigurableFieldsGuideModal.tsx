@@ -76,12 +76,6 @@ export function ConfigurableFieldsGuideModal({ isOpen, onClose }: ConfigurableFi
       content: <SwitchContent />
     },
     {
-      id: 'list',
-      title: 'List Input',
-      icon: <List className="h-4 w-4" />,
-      content: <ListContent />
-    },
-    {
       id: 'special-keyword',
       title: 'Special: Keyword',
       icon: <Sparkles className="h-4 w-4" />,
@@ -446,7 +440,7 @@ function GeneralPropertiesContent() {
           </CardHeader>
           <CardContent>
             <p><strong>Type:</strong> string</p>
-            <p><strong>Options:</strong> &quot;text&quot;, &quot;number&quot;, &quot;select&quot;, &quot;textarea&quot;, &quot;switch&quot;, &quot;list&quot;</p>
+            <p><strong>Options:</strong> &quot;text&quot;, &quot;number&quot;, &quot;select&quot;, &quot;textarea&quot;, &quot;switch&quot;</p>
             <p><strong>Description:</strong> Determines what type of input control is rendered.</p>
             <pre className="bg-muted p-2 rounded mt-2">
               <code>"type": "select"</code>
@@ -1209,96 +1203,6 @@ function TipsContent() {
           <p>• Verify that all field types render correctly</p>
           <p>• Check that validation messages are clear</p>
           <p>• Test the complete user flow from form to results</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function ListContent() {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">List Input Field</h2>
-      <p className="text-muted-foreground">
-        Dynamic list input that allows users to add and remove multiple text items.
-      </p>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Basic List Field</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-            <code>{`{
-  "name": "character_traits",
-  "label": "Character Traits",
-  "type": "list",
-  "placeholder": "e.g., Brave, Wise, Mysterious",
-  "required": false,
-  "default": ["Brave", "Loyal"]
-}`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Use Cases</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p>• Multiple keywords or themes for name generation</p>
-          <p>• Character traits, abilities, or characteristics</p>
-          <p>• Lists of preferred name styles or categories</p>
-          <p>• Multiple requirements that should be incorporated</p>
-          <p>• Tags or labels for categorization</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Available Properties</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p><strong>All general properties plus:</strong></p>
-          <div>
-            <p>• <code>placeholder</code> - Hint text shown in each list item input</p>
-            <p>• <code>default</code> - Array of default values (e.g., ["item1", "item2"])</p>
-            <p>• Automatically spans all columns for better layout</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">User Interface</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p>The list field provides:</p>
-          <p>• Individual text inputs for each list item</p>
-          <p>• "X" button to remove items</p>
-          <p>• "Add Item" button to create new entries</p>
-          <p>• Starts with one empty input if no default values</p>
-          <p>• Empty items are automatically filtered out when submitting</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Advanced Example</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-            <code>{`{
-  "name": "required_elements",
-  "label": "Required Elements in Names",
-  "type": "list",
-  "placeholder": "Enter element (e.g., Fire, Magic, Ancient)",
-  "required": true,
-  "default": ["Magic"],
-  "description": "Names will incorporate these elements",
-  "layout_span_all_columns": true
-}`}</code>
-          </pre>
         </CardContent>
       </Card>
     </div>

@@ -147,7 +147,7 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
         </div>
       );
 
-    case 'list_unordered':
+    case 'unordered_list':
       const unorderedItems = content_data.items as string[];
       
       return (
@@ -158,7 +158,7 @@ export function ContentBlockRenderer({ block }: ContentBlockRendererProps) {
         </ul>
       );
 
-    case 'list_ordered':
+    case 'ordered_list':
       const orderedItems = content_data.items as string[];
       
       return (

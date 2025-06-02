@@ -20,6 +20,7 @@ import {
   addContentBlockForTool,
   updateContentBlock as updateToolContentBlock
 } from '@/app/(admin)/admin/tools/content/actions';
+import { ListEditor } from '@/components/admin/content/ListEditor';
 
 interface ContentBlock {
   id: string;
@@ -282,6 +283,15 @@ export function ContentBlockForm({
             </div>
           </div>
         );
+
+      case 'unordered_list':
+      case 'ordered_list':
+        return <ListEditor 
+          listType={selectedBlockType as 'unordered_list' | 'ordered_list'}
+          register={register}
+          setValue={setValue}
+          editingBlock={editingBlock}
+        />;
 
       default:
         return (
