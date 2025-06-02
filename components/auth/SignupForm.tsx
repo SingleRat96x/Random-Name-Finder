@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { 
+  checkRateLimit, 
+  recordFailedAttempt, 
+  recordSuccessfulAttempt,
+  formatRemainingTime,
+  type RateLimitResult 
+} from '@/lib/utils/rateLimiting';
 
 interface FormData {
   email: string;
@@ -33,12 +40,47 @@ export default function SignupForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Rate limiting state
+  const [rateLimitState, setRateLimitState] = useState<RateLimitResult>({
+    isAllowed: true,
+    remainingTime: 0,
+    maxAttempts: 5,
+    currentAttempts: 0,
+  });
 
   // Initialize Supabase client
   const supabase = createClient();
 
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Check rate limit on component mount and set up timer for lockout countdown
+  useEffect(() => {
+    const checkInitialRateLimit = () => {
+      const result = checkRateLimit('signup');
+      setRateLimitState(result);
+    };
+
+    checkInitialRateLimit();
+
+    // Set up countdown timer if locked out
+    let interval: NodeJS.Timeout;
+    if (!rateLimitState.isAllowed && rateLimitState.remainingTime > 0) {
+      interval = setInterval(() => {
+        const result = checkRateLimit('signup');
+        setRateLimitState(result);
+        
+        if (result.isAllowed) {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [rateLimitState.isAllowed, rateLimitState.remainingTime]);
 
   // Handle input changes
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -49,12 +91,10 @@ export default function SignupForm() {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
     
-    // Clear general error when user makes changes
+    // Clear general error and success message when user makes changes
     if (errors.general) {
       setErrors(prev => ({ ...prev, general: undefined }));
     }
-    
-    // Clear success message when user makes changes
     if (successMessage) {
       setSuccessMessage('');
     }
@@ -72,14 +112,14 @@ export default function SignupForm() {
     }
 
     // Password validation
-    if (!formData.password) {
+    if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
     }
 
     // Confirm password validation
-    if (!formData.confirmPassword) {
+    if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
@@ -96,6 +136,17 @@ export default function SignupForm() {
     // Clear previous messages
     setErrors({});
     setSuccessMessage('');
+
+    // Check rate limiting first
+    const rateLimitCheck = checkRateLimit('signup');
+    setRateLimitState(rateLimitCheck);
+    
+    if (!rateLimitCheck.isAllowed) {
+      setErrors({ 
+        general: `Too many failed signup attempts. Please wait ${formatRemainingTime(rateLimitCheck.remainingTime)} before trying again.` 
+      });
+      return;
+    }
 
     // Validate form
     if (!validateForm()) {
@@ -117,6 +168,10 @@ export default function SignupForm() {
       });
 
       if (error) {
+        // Record failed attempt for rate limiting
+        const newRateLimitState = recordFailedAttempt('signup');
+        setRateLimitState(newRateLimitState);
+
         // Handle Supabase auth errors
         console.error('Signup error:', error);
         
@@ -132,6 +187,12 @@ export default function SignupForm() {
         } else if (error.message.includes('signup is disabled')) {
           errorMessage = 'Account creation is currently disabled. Please try again later.';
         }
+
+        // Add rate limiting info if approaching limit
+        if (newRateLimitState.currentAttempts >= newRateLimitState.maxAttempts - 2) {
+          const remaining = newRateLimitState.maxAttempts - newRateLimitState.currentAttempts;
+          errorMessage += ` (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before temporary lockout)`;
+        }
         
         setErrors({ general: errorMessage });
         return;
@@ -139,6 +200,9 @@ export default function SignupForm() {
 
       // Check if user was created successfully
       if (data.user) {
+        // Record successful attempt (clears rate limiting)
+        recordSuccessfulAttempt('signup');
+
         // Check if user needs email confirmation
         if (data.user.identities && data.user.identities.length === 0) {
           // This might indicate the user already exists but is unconfirmed
@@ -195,106 +259,121 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="Enter your email"
-            className={errors.email ? 'border-destructive' : ''}
-            disabled={isLoading}
-            autoComplete="email"
-          />
-          {errors.email && (
-            <p className="text-sm text-destructive flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              {errors.email}
-            </p>
-          )}
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Rate Limiting Warning */}
+      {!rateLimitState.isAllowed && (
+        <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            <span className="font-medium">Account temporarily locked.</span><br />
+            Too many failed signup attempts. Please wait {formatRemainingTime(rateLimitState.remainingTime)} before trying again.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            placeholder="Enter your password"
-            className={errors.password ? 'border-destructive' : ''}
-            disabled={isLoading}
-            autoComplete="new-password"
-          />
-          {errors.password && (
-            <p className="text-sm text-destructive flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              {errors.password}
-            </p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Password must be at least 8 characters long
+      {/* Rate Limiting Info */}
+      {rateLimitState.isAllowed && rateLimitState.currentAttempts > 0 && (
+        <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/20">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+            {rateLimitState.maxAttempts - rateLimitState.currentAttempts} failed signup attempt{rateLimitState.maxAttempts - rateLimitState.currentAttempts !== 1 ? 's' : ''} remaining before temporary lockout.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            {successMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* General Error */}
+      {errors.general && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errors.general}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Email Field */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-email">Email Address</Label>
+        <Input
+          id="signup-email"
+          type="email"
+          placeholder="Enter your email"
+          value={formData.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+          disabled={!rateLimitState.isAllowed}
+          required
+        />
+        {errors.email && (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {errors.email}
           </p>
-        </div>
-
-        {/* Confirm Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            placeholder="Confirm your password"
-            className={errors.confirmPassword ? 'border-destructive' : ''}
-            disabled={isLoading}
-            autoComplete="new-password"
-          />
-          {errors.confirmPassword && (
-            <p className="text-sm text-destructive flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              {errors.confirmPassword}
-            </p>
-          )}
-        </div>
-
-        {/* General Error Message */}
-        {errors.general && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{errors.general}</AlertDescription>
-          </Alert>
         )}
+      </div>
 
-        {/* Success Message */}
-        {successMessage && (
-          <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{successMessage}</AlertDescription>
-          </Alert>
+      {/* Password Field */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-password">Password</Label>
+        <Input
+          id="signup-password"
+          type="password"
+          placeholder="Create a password (min. 6 characters)"
+          value={formData.password}
+          onChange={(e) => handleInputChange('password', e.target.value)}
+          className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
+          disabled={!rateLimitState.isAllowed}
+          required
+        />
+        {errors.password && (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {errors.password}
+          </p>
         )}
+      </div>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Account...
-            </>
-          ) : (
-            'Create Account'
-          )}
-        </Button>
-      </form>
-    </div>
+      {/* Confirm Password Field */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+        <Input
+          id="signup-confirm-password"
+          type="password"
+          placeholder="Confirm your password"
+          value={formData.confirmPassword}
+          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+          className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
+          disabled={!rateLimitState.isAllowed}
+          required
+        />
+        {errors.confirmPassword && (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {errors.confirmPassword}
+          </p>
+        )}
+      </div>
+
+      {/* Submit Button */}
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isLoading || !rateLimitState.isAllowed}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Creating Account...
+          </>
+        ) : (
+          'Create Account'
+        )}
+      </Button>
+    </form>
   );
 } 

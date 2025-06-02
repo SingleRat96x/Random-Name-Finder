@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/browser';
@@ -24,6 +24,9 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   refreshSavedNames: () => Promise<void>;
+  // Session timeout related
+  sessionTimeoutWarning: boolean;
+  extendSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,12 +47,23 @@ interface AuthProviderProps {
 const profileCache = new Map<string, UserProfile | null>();
 const savedNamesCache = new Map<string, SavedName[]>();
 
+// Session timeout configuration
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+const WARNING_TIME = 2 * 60 * 1000; // Show warning 2 minutes before logout
+const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [savedNames, setSavedNames] = useState<SavedName[] | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Session timeout state
+  const [sessionTimeoutWarning, setSessionTimeoutWarning] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
 
   const router = useRouter();
 
@@ -86,6 +100,94 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSavedNames(namesData);
   }, []);
 
+  // Session timeout functions
+  const clearTimeouts = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+    setSessionTimeoutWarning(false);
+  }, []);
+
+  const handleInactivityLogout = useCallback(async () => {
+    console.log('Auto-logout due to inactivity');
+    clearTimeouts();
+    
+    try {
+      await supabase.auth.signOut();
+      // Show notification that session expired
+      if (typeof window !== 'undefined') {
+        alert('Your session has expired due to inactivity. Please log in again.');
+      }
+      router.push('/login');
+    } catch (error) {
+      console.error('Error during auto-logout:', error);
+    }
+  }, [clearTimeouts, router]);
+
+  const showSessionWarning = useCallback(() => {
+    console.log('Showing session timeout warning');
+    setSessionTimeoutWarning(true);
+    
+    // Set final logout timeout
+    timeoutRef.current = setTimeout(handleInactivityLogout, WARNING_TIME);
+  }, [handleInactivityLogout]);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (!user) return;
+    
+    const now = Date.now();
+    lastActivityRef.current = now;
+    
+    // Clear existing timeouts
+    clearTimeouts();
+    
+    // Set warning timeout
+    warningTimeoutRef.current = setTimeout(showSessionWarning, INACTIVITY_TIMEOUT - WARNING_TIME);
+  }, [user, clearTimeouts, showSessionWarning]);
+
+  const extendSession = useCallback(() => {
+    console.log('Session extended by user');
+    clearTimeouts();
+    resetInactivityTimer();
+  }, [clearTimeouts, resetInactivityTimer]);
+
+  const handleUserActivity = useCallback(() => {
+    const now = Date.now();
+    // Only reset timer if enough time has passed to avoid excessive resets
+    if (now - lastActivityRef.current > 30000) { // 30 seconds throttle
+      resetInactivityTimer();
+    }
+  }, [resetInactivityTimer]);
+
+  // Set up activity listeners
+  useEffect(() => {
+    if (!user) {
+      clearTimeouts();
+      return;
+    }
+
+    // Start the inactivity timer
+    resetInactivityTimer();
+
+    // Add activity event listeners
+    ACTIVITY_EVENTS.forEach(event => {
+      document.addEventListener(event, handleUserActivity, { passive: true });
+    });
+
+    return () => {
+      // Clean up event listeners
+      ACTIVITY_EVENTS.forEach(event => {
+        document.removeEventListener(event, handleUserActivity);
+      });
+      clearTimeouts();
+    };
+  }, [user, resetInactivityTimer, handleUserActivity, clearTimeouts]);
+
   useEffect(() => {
     // 1) grab whatever is in the cookie (optimistic)
     supabase.auth.getSession().then(async ({ data }) => {
@@ -117,14 +219,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Clear cache when user logs out
         profileCache.clear();
         savedNamesCache.clear();
+        // Clear session timeouts when user logs out
+        clearTimeouts();
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchUserProfile, fetchSavedNames]);
+  }, [fetchUserProfile, fetchSavedNames, clearTimeouts]);
 
   const logout = async () => {
     setLoading(true);
+    clearTimeouts(); // Clear timeouts before logout
+    
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error during logout:', error);
@@ -150,6 +256,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     logout,
     refreshSavedNames,
+    sessionTimeoutWarning,
+    extendSession,
   };
 
   return (

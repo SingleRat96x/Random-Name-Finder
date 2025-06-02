@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SessionTimeoutWarning } from "@/components/providers/SessionTimeoutWarning";
 import { Toaster } from "sonner";
 import AdSense from "@/components/adsense/adsense";
 
@@ -44,6 +45,7 @@ export default function RootLayout({
             <main className="flex-grow pt-16">{children}</main>
             <Footer />
             <Toaster richColors position="top-right" />
+            <SessionTimeoutWarning />
           </AuthProvider>
         </ThemeProvider>
       </body>
