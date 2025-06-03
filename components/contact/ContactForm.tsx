@@ -131,10 +131,19 @@ export function ContactForm() {
                 placeholder="Enter your full name"
                 disabled={isSubmitting}
                 className={errors.name ? 'border-destructive' : ''}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                aria-invalid={errors.name ? 'true' : 'false'}
                 {...register('name')}
               />
               {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+                <p 
+                  id="name-error" 
+                  className="text-sm text-destructive"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -147,10 +156,19 @@ export function ContactForm() {
                 placeholder="Enter your email address"
                 disabled={isSubmitting}
                 className={errors.email ? 'border-destructive' : ''}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                aria-invalid={errors.email ? 'true' : 'false'}
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p 
+                  id="email-error" 
+                  className="text-sm text-destructive"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {errors.email.message}
+                </p>
               )}
             </div>
           </div>
@@ -164,10 +182,19 @@ export function ContactForm() {
               placeholder="What is this message about?"
               disabled={isSubmitting}
               className={errors.subject ? 'border-destructive' : ''}
+              aria-describedby={errors.subject ? 'subject-error' : undefined}
+              aria-invalid={errors.subject ? 'true' : 'false'}
               {...register('subject')}
             />
             {errors.subject && (
-              <p className="text-sm text-destructive">{errors.subject.message}</p>
+              <p 
+                id="subject-error" 
+                className="text-sm text-destructive"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.subject.message}
+              </p>
             )}
           </div>
 
@@ -180,14 +207,25 @@ export function ContactForm() {
               rows={6}
               disabled={isSubmitting}
               className={`min-h-[150px] resize-y ${errors.message ? 'border-destructive' : ''}`}
+              aria-describedby={errors.message ? 'message-error' : 'message-help'}
+              aria-invalid={errors.message ? 'true' : 'false'}
               {...register('message')}
             />
             {errors.message && (
-              <p className="text-sm text-destructive">{errors.message.message}</p>
+              <p 
+                id="message-error" 
+                className="text-sm text-destructive"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.message.message}
+              </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Please provide as much detail as possible so we can help you effectively.
-            </p>
+            {!errors.message && (
+              <p id="message-help" className="text-xs text-muted-foreground">
+                Please provide as much detail as possible so we can help you effectively.
+              </p>
+            )}
           </div>
 
           {/* Submit Button */}

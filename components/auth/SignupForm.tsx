@@ -106,23 +106,27 @@ export default function SignupForm() {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email address is required to create an account';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address (example: user@domain.com)';
     }
 
     // Password validation
     if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password is required to create an account';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
+      newErrors.password = 'Password must be at least 6 characters long for security';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password should be at least 8 characters for better security';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = 'Password should include uppercase, lowercase, and number for security';
     }
 
     // Confirm password validation
     if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = 'Please confirm your password to ensure it matches';
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Passwords do not match. Please re-enter your password';
     }
 
     setErrors(newErrors);
@@ -311,9 +315,16 @@ export default function SignupForm() {
           className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
           disabled={!rateLimitState.isAllowed}
           required
+          aria-describedby={errors.email ? 'signup-email-error' : undefined}
+          aria-invalid={errors.email ? 'true' : 'false'}
         />
         {errors.email && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p 
+            id="signup-email-error" 
+            className="text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+          >
             {errors.email}
           </p>
         )}
@@ -325,15 +336,30 @@ export default function SignupForm() {
         <Input
           id="signup-password"
           type="password"
-          placeholder="Create a password (min. 6 characters)"
+          placeholder="Create a password (min. 8 characters)"
           value={formData.password}
           onChange={(e) => handleInputChange('password', e.target.value)}
           className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
           disabled={!rateLimitState.isAllowed}
           required
+          aria-describedby={errors.password ? 'signup-password-error' : 'signup-password-help'}
+          aria-invalid={errors.password ? 'true' : 'false'}
         />
+        {!errors.password && (
+          <p 
+            id="signup-password-help" 
+            className="text-xs text-muted-foreground"
+          >
+            Use at least 8 characters with uppercase, lowercase, and numbers for security
+          </p>
+        )}
         {errors.password && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p 
+            id="signup-password-error" 
+            className="text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+          >
             {errors.password}
           </p>
         )}
@@ -351,9 +377,16 @@ export default function SignupForm() {
           className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
           disabled={!rateLimitState.isAllowed}
           required
+          aria-describedby={errors.confirmPassword ? 'signup-confirm-password-error' : undefined}
+          aria-invalid={errors.confirmPassword ? 'true' : 'false'}
         />
         {errors.confirmPassword && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p 
+            id="signup-confirm-password-error" 
+            className="text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+          >
             {errors.confirmPassword}
           </p>
         )}

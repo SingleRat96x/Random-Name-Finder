@@ -103,14 +103,16 @@ export default function LoginForm() {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email address is required to sign in';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address (example: user@domain.com)';
     }
 
     // Password validation
     if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password is required to sign in';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
     }
 
     setErrors(newErrors);
@@ -260,9 +262,16 @@ export default function LoginForm() {
           className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
           disabled={!rateLimitState.isAllowed}
           required
+          aria-describedby={errors.email ? 'email-error' : undefined}
+          aria-invalid={errors.email ? 'true' : 'false'}
         />
         {errors.email && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p 
+            id="email-error" 
+            className="text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+          >
             {errors.email}
           </p>
         )}
@@ -280,9 +289,16 @@ export default function LoginForm() {
           className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
           disabled={!rateLimitState.isAllowed}
           required
+          aria-describedby={errors.password ? 'password-error' : undefined}
+          aria-invalid={errors.password ? 'true' : 'false'}
         />
         {errors.password && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p 
+            id="password-error" 
+            className="text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+          >
             {errors.password}
           </p>
         )}

@@ -81,6 +81,8 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   other: {
     "msapplication-config": "/browserconfig.xml",
+    // Google Site Verification
+    "google-site-verification": "A_mmg6zHmq9LBmDtyPBwNR4YP50Wc3Agp13886wdlXc",
   },
 };
 
@@ -89,8 +91,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const adsensePublisherId = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
-
   // Organization JSON-LD structured data
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -129,14 +129,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
-        {/* Preconnect to AdSense domains */}
-        {adsensePublisherId && (
-          <>
-            <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
-            <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-            <link rel="preconnect" href="https://adtrafficquality.google" />
-          </>
-        )}
+        {/* Preconnect to Google Analytics and AdSense domains */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
+        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+        <link rel="preconnect" href="https://adtrafficquality.google" />
         
         {/* DNS prefetch for additional performance */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
@@ -160,24 +158,47 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col`}>
+        {/* Skip to content link for screen readers */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          Skip to content
+        </a>
+        
         <ThemeProvider>
           <AuthProvider>
             <Navbar />
-            <main className="flex-grow pt-16">{children}</main>
+            <main id="main-content" className="flex-grow pt-16">{children}</main>
             <Footer />
             <Toaster richColors position="top-right" />
             <SessionTimeoutWarning />
           </AuthProvider>
         </ThemeProvider>
 
-        {/* Load AdSense script with lazy loading strategy */}
-        {adsensePublisherId && (
-          <Script
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePublisherId}`}
-            strategy="lazyOnload"
-            crossOrigin="anonymous"
-          />
-        )}
+        {/* Google Analytics - Load early for better data collection */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-RZQV3VEZ6N"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-RZQV3VEZ6N', {
+              page_title: document.title,
+              page_location: window.location.href,
+            });
+          `}
+        </Script>
+
+        {/* Google AdSense - Load with lazy strategy for performance */}
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8899111851490905"
+          strategy="lazyOnload"
+          crossOrigin="anonymous"
+        />
       </body>
     </html>
   );

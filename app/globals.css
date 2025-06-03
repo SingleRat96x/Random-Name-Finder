@@ -259,3 +259,26 @@
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
+
+/* Motion sensitivity support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Specifically target our custom animations */
+  .animate-fade-in-up,
+  .animate-slide-in-up,
+  .animate-float,
+  .animate-float-slow {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  
+  /* Remove all transform transitions */
+  * {
+    transform: none !important;
+  }
+}

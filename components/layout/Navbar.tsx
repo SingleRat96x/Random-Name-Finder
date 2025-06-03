@@ -72,7 +72,7 @@ export default function Navbar() {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav aria-label="Main navigation" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex-shrink-0">
@@ -176,7 +176,9 @@ export default function Navbar() {
               <button
                 onClick={toggleMenu}
                 className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-                aria-expanded="false"
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+                aria-label="Toggle navigation"
               >
                 <span className="sr-only">Open main menu</span>
                 {/* Hamburger icon */}
@@ -218,7 +220,10 @@ export default function Navbar() {
 
         {/* Mobile Navigation Menu - Only for Unauthenticated Users */}
         {!user && (
-          <div className={`${isMenuOpen ? 'block' : 'hidden'} md:hidden`}>
+          <div 
+            id="mobile-menu"
+            className={`${isMenuOpen ? 'block' : 'hidden'} md:hidden`}
+          >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-border bg-background">
               <Link
                 href="/"
